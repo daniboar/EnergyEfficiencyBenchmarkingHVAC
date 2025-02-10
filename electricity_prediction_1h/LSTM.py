@@ -26,14 +26,14 @@ class LSTMModel(nn.Module):
         x = x.unsqueeze(1)
         lstm_out, _ = self.lstm(x)
         out = self.fc(lstm_out[:, -1, :])
-        return out.squeeze()
+        return out
 
 
 # Definesc datasetul pentru Torch
 class TimeSeriesDataset(Dataset):
     def __init__(self, X, y):
         self.X = torch.tensor(X.values, dtype=torch.float32)
-        self.y = torch.tensor(y.values, dtype=torch.float32)
+        self.y = torch.tensor(y.values, dtype=torch.float32).view(-1, 1)
 
     def __len__(self):
         return len(self.X)
@@ -90,16 +90,16 @@ for building_id in building_columns:
 
     # Construiesc modelul
     input_dim = X.shape[1]
-    hidden_dim = 64
+    hidden_dim = 128
     output_dim = 1
     num_layers = 2
 
     model = LSTMModel(input_dim, hidden_dim, output_dim, num_layers)
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0005)
 
     # Antrenarea modelului
-    epochs = 50
+    epochs = 100
     for epoch in range(epochs):
         model.train()
         train_loss = 0.0
@@ -132,18 +132,18 @@ for building_id in building_columns:
     y_test_pred = np.concatenate(predictions)
     y_test_actual = np.concatenate(actuals)
 
-    # Calculăm metricile de performanță
+    # Calculez metricile de performanta
     mse = mean_squared_error(y_test_actual, y_test_pred)
     mae = mean_absolute_error(y_test_actual, y_test_pred)
     r2 = r2_score(y_test_actual, y_test_pred)
     smape = np.mean(2 * np.abs(y_test_pred - y_test_actual) / (np.abs(y_test_pred) + np.abs(y_test_actual))) * 100
 
-    print(f"Clădire: {building_id}, MSE: {mse:.2f}, MAE: {mae:.2f}, R^2: {r2:.2f}, SMAPE: {smape:.2f}%")
+    print(f"Cladire: {building_id}, MSE: {mse:.2f}, MAE: {mae:.2f}, R^2: {r2:.2f}, SMAPE: {smape:.2f}%")
 
-    # Salvez rezultatele într-un CSV
+    # Salvez rezultatele intr-un CSV
     result = pd.DataFrame({'timestamp': building_data.index[-len(y_test_actual):],
-                           'actual': y_test_actual,
-                           'predicted': y_test_pred})
+                           'actual': y_test_actual.flatten(),
+                           'predicted': y_test_pred.flatten()})
     result['error'] = result['actual'] - result['predicted']
     result['MSE'] = mse
     result['MAE'] = mae

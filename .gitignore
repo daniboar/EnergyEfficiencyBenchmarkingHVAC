@@ -1,4 +1,4 @@
 .idea
 .DS_Store
-/electricity_prediction_1h/.venv
-/electricity_prediction_1h/electricity_cleaned.csv
+.venv
+electricity_cleaned.csv
