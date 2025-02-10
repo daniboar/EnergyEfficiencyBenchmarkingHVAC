@@ -27,9 +27,9 @@ def create_time_series_features(df, target_column, window_size=3):
     df['day'] = df.index.day
     df['month'] = df.index.month
     df['weekday'] = df.index.weekday
-    df['is_weekend'] = df['weekday'].apply(lambda x: 1 if x >= 5 else 0)  # Weekend: sâmbata/duminica
+    df['is_weekend'] = df['weekday'].apply(lambda x: 1 if x >= 5 else 0)  # Weekend: sambata/duminica
 
-    # Sezon (1 = iarna, 2 = primăvara, 3 = vara, 4 = toamna)
+    # Sezon (1 = iarna, 2 = primavara, 3 = vara, 4 = toamna)
     df['season'] = df['month'].apply(
         lambda x: 1 if x in [12, 1, 2] else 2 if x in [3, 4, 5] else 3 if x in [6, 7, 8] else 4
     )

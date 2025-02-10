@@ -99,10 +99,10 @@ for building_id in building_columns:
 
     model = LSTMModel(input_dim, hidden_dim, output_dim, num_layers)
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0005)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
     # Antrenarea modelului
-    epochs = 100
+    epochs = 200
     for epoch in range(epochs):
         model.train()
         train_loss = 0.0
