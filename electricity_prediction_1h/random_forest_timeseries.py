@@ -3,7 +3,8 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import numpy as np
 
 # 1. Incarc datele din csv, si aleg primele 30 de cladiri + timestamp-ul
 data = pd.read_csv('electricity_cleaned.csv')
@@ -35,13 +36,13 @@ def create_time_series_features(df, target_column, window_size=3):
     df.dropna(inplace=True)
     return df
 
-# 3. Iterez prin cele 30 de cladiri pentru a face precizia si a salva intr-un csv aceasta predictie
+# 3. Iterez prin cele 30 de cladiri pentru a face predictia si salvarea in CSV
 building_columns = data.columns[1:31]
 
 cnt = 0
 for building_id in building_columns:
     cnt += 1
-    print(f"\nProcesăm clădirea {cnt}: {building_id}")
+    print(f"\nProcesez cladirea {cnt}: {building_id}")
     building_data = data[['timestamp', building_id]].dropna()
 
     # Transform timestamp intr-un format datetime
@@ -71,17 +72,30 @@ for building_id in building_columns:
     # Evaluez modelul pe setul de test
     y_test_pred = model.predict(X_test)
     test_mse = mean_squared_error(y_test, y_test_pred)
-    print(f"Mean Squared Error (MSE) pe setul de test: {test_mse:.2f}")
+    test_mae = mean_absolute_error(y_test, y_test_pred)
+    test_r2 = r2_score(y_test, y_test_pred)
+    test_smape = np.mean(2 * np.abs(y_test_pred - y_test) / (np.abs(y_test_pred) + np.abs(y_test))) * 100
+
+    print(f"Test Metrics pentru {building_id}:")
+    print(f"  - MSE: {test_mse:.2f}")
+    print(f"  - MAE: {test_mae:.2f}")
+    print(f"  - R²: {test_r2:.2f}")
+    print(f"  - SMAPE: {test_smape:.2f}%")
 
     # Realizez predicții pentru intreaga serie
     all_predictions = model.predict(X)
 
     # Salvez rezultatele într-un DataFrame
-    result = pd.DataFrame({
-        'timestamp': building_data.index,
-        'actual': y,
-        'predicted': all_predictions
-    })
+    result = pd.DataFrame({'timestamp': building_data.index,
+                           'actual': y,
+                           'predicted': all_predictions,
+                           'error': y - all_predictions})
+
+    # Adaug metricile in CSV
+    result['MSE'] = test_mse
+    result['MAE'] = test_mae
+    result['R2'] = test_r2
+    result['SMAPE'] = test_smape
 
     building_folder = os.path.join(output_folder, f'building_{building_id}')
     os.makedirs(building_folder, exist_ok=True)
@@ -104,4 +118,4 @@ for building_id in building_columns:
     plt.savefig(graph_output_path)
     plt.close()
 
-print("\nToate predicțiile pentru cele 30 de clădiri au fost finalizate!")
+print("\nToate predictiile pentru cele 30 de cladiri au fost finalizate!")

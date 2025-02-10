@@ -42,11 +42,13 @@ class TimeSeriesDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 
-# 3. Iterez prin cele 30 de cladiri pentru a face precizia si a salva intr-un csv aceasta predictie
+# 3. Iterez prin cele 30 de cladiri pentru a face predictia si salvarea in CSV
 building_columns = data.columns[1:31]
 
+cnt = 0
 for building_id in building_columns:
-    print(f"Procesăm datele pentru clădirea: {building_id}")
+    cnt = cnt + 1
+    print(f"\nIncepe procesarea pentru cladirea {cnt}: {building_id}")
     building_data = data[['timestamp', building_id]].dropna()
 
     # Transform timestamp intr-un format datetime
@@ -167,4 +169,4 @@ for building_id in building_columns:
     plt.savefig(graph_path)
     plt.close()
 
-print("\nToate predicțiile și graficele pentru cele 30 de clădiri au fost finalizate!")
+print("\nToate predictiile pentru cele 30 de cladiri au fost finalizate!")

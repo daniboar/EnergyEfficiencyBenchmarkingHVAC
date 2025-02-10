@@ -3,7 +3,8 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import numpy as np
 
 # 1. Incarc datele din csv, si aleg primele 30 de cladiri + timestamp-ul
 data = pd.read_csv('electricity_cleaned.csv')
@@ -11,7 +12,7 @@ data = data.iloc[:, :31]
 output_folder = 'random_forest_predictions'
 os.makedirs(output_folder, exist_ok=True)
 
-# 2. Iterez prin cele 30 de cladiri pentru a face precizia si a salva intr-un csv aceasta predictie
+# 2. Iterez prin cele 30 de cladiri pentru a face predictia si salvarea in CSV
 building_columns = data.columns[1:31]
 
 cnt = 0
@@ -54,14 +55,29 @@ for building_id in building_columns:
     # Evaluez modelul pe setul de test
     y_test_pred = model.predict(X_test)
     test_mse = mean_squared_error(y_test, y_test_pred)
-    print(f"Mean Squared Error (MSE) pe setul de test: {test_mse:.2f}")
+    test_mae = mean_absolute_error(y_test, y_test_pred)
+    test_r2 = r2_score(y_test, y_test_pred)
+    test_smape = np.mean(2 * np.abs(y_test_pred - y_test) / (np.abs(y_test_pred) + np.abs(y_test))) * 100
+
+    print(f"Test Metrics pentru {building_id}:")
+    print(f"  - MSE: {test_mse:.2f}")
+    print(f"  - MAE: {test_mae:.2f}")
+    print(f"  - R²: {test_r2:.2f}")
+    print(f"  - SMAPE: {test_smape:.2f}%")
 
     # Realizez predictii pentru toata perioada (01.01.2016 - 31.12.2017)
     all_predictions = model.predict(X)
 
     result = pd.DataFrame({'timestamp': building_data.index,
-                           'actual': y,
-                           'predicted': all_predictions})
+                       'actual': y,
+                       'predicted': all_predictions,
+                       'error': y - all_predictions})
+
+    # Adaug metricile in fiecare CSV
+    result['MSE'] = test_mse
+    result['MAE'] = test_mae
+    result['R2'] = test_r2
+    result['SMAPE'] = test_smape
 
     # Salvez intr-un csv acest informatii (timestamp, valoarea actuala, valoarea prezisa)
     building_folder = os.path.join(output_folder, f'building_{building_id}')
