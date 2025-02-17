@@ -1,67 +1,80 @@
+import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-import numpy as np
 
-# 1. Incarc datele din csv, si aleg primele 30 de cladiri + timestamp-ul
+# 1. Incarc datele din csv
 data = pd.read_csv('electricity_cleaned.csv')
-data = data.iloc[:, :31]  # Timestamp + primele 30 de cladiri
+data = data.iloc[:, :31]  # Timestamp + primele 30 de clădiri
 output_folder = 'random_forest_daily_predictions'
 os.makedirs(output_folder, exist_ok=True)
 
+# Parametrii modelului
+LOOKBACK_DAYS = 3  # Folosesc ultimele 3 zile (3 * 24 ore) pentru predicție
+PREDICTION_HORIZON = 24  # Vreau sa prezic pentru urmatoareal 24 de ore
 
-# 2. Functie pentru agregarea datelor pe zile + adaugarea caracteristicilor avansate
-def aggregate_daily(df, target_column):
+metrics_log = []
+
+# 2. Functie pentru generarea caracteristicilor temporale
+def create_time_series_features(df, target_column, lookback_days):
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df.set_index('timestamp', inplace=True)
 
-    # Agregam prin medie
-    df_daily = df.resample('D').mean()
-
-    # Lag features (valori anterioare)
-    for lag in range(1, 4):  # 3 zile anterioare
-        df_daily[f'lag_{lag}'] = df_daily[target_column].shift(lag)
-
     # Caracteristici temporale
-    df_daily['day'] = df_daily.index.day
-    df_daily['month'] = df_daily.index.month
-    df_daily['day_of_year'] = df_daily.index.dayofyear  # Ziua din an (1-365)
-    df_daily['week_of_year'] = df_daily.index.isocalendar().week  # Saptamana anului (1-52)
-    df_daily['weekday'] = df_daily.index.weekday
-    df_daily['is_weekend'] = df_daily['weekday'].apply(lambda x: 1 if x >= 5 else 0)
+    df['hour'] = df.index.hour
+    df['day'] = df.index.day
+    df['month'] = df.index.month
+    df['day_of_year'] = df.index.dayofyear
+    df['week_of_year'] = df.index.isocalendar().week
+    df['weekday'] = df.index.weekday
+    df['is_weekend'] = df['weekday'].apply(lambda x: 1 if x >= 5 else 0)
 
-    # Anotimpuri (1 = iarna, 2 = primavara, 3 = vara, 4 = toamna)
-    df_daily['season'] = df_daily['month'].apply(
+    # Anotimpuri
+    df['season'] = df['month'].apply(
         lambda x: 1 if x in [12, 1, 2] else 2 if x in [3, 4, 5] else 3 if x in [6, 7, 8] else 4
     )
 
     # One-hot encoding pentru ziua saptamanii si sezon
-    df_daily = pd.get_dummies(df_daily, columns=['weekday', 'season'])
+    df = pd.get_dummies(df, columns=['weekday', 'season'])
 
-    df_daily.dropna(inplace=True)
-    return df_daily
+    # Creez lag-uri pentru ultimele `lookback_days` zile (fiecare zi are 24 ore)
+    for lag in range(1, lookback_days * 24 + 1):
+        df[f'lag_{lag}'] = df[target_column].shift(lag)
+
+    df.dropna(inplace=True)
+    return df
 
 
-# 3. Iterez prin cele 30 de cladiri
-building_columns = data.columns[1:31]
+# 3. Iterez prin cele 30 de cladiri și antrenez modelele
+for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
+    print(f"\nProcesare pentru cladirea: {building_id}")
 
-cnt = 0
-for building_id in building_columns:
-    cnt += 1
-    print(f"\nProcesez cladirea {cnt}: {building_id}")
     building_data = data[['timestamp', building_id]].dropna()
 
-    # Prelucrez datele la nivel de zi + adaug caracteristici avansate
-    building_data = aggregate_daily(building_data, building_id)
+    # Creez setul de date cu caracteristici temporale
+    building_data = create_time_series_features(building_data, building_id, LOOKBACK_DAYS)
 
-    # Separ caracteristicile (X) și tinta (y)
-    X = building_data.drop(columns=[building_id])
-    y = building_data[building_id]
+    # Construiesc X (input) și y (output)
+    X, y, timestamps = [], [], []
+    for i in range(len(building_data) - PREDICTION_HORIZON):
+        X.append(building_data.iloc[i].values)
+        y.append(building_data[building_id].iloc[i + 1: i + 1 + PREDICTION_HORIZON].values)
 
-    # Impart datele in train (80%), test (10%) si validare (10%)
+        # Salvăm TOATE cele 24 de timestamp-uri asociate predicției
+        timestamps.append(building_data.index[i + 1: i + 1 + PREDICTION_HORIZON].tolist())
+
+    # Adaug timestamp-urile intr-o singura lista (flatten)
+    timestamps = [ts for sublist in timestamps for ts in sublist]
+
+
+    X = np.array(X)
+    y = np.array(y)
+
+    # Împart datele în train (80%), validare (10%), test (10%)
     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
     X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, shuffle=False)
 
@@ -69,40 +82,41 @@ for building_id in building_columns:
     model = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42)
     model.fit(X_train, y_train)
 
-    # Evaluez modelul pe setul de validare
-    y_val_pred = model.predict(X_val)
-    val_mse = mean_squared_error(y_val, y_val_pred)
-
-    # Evaluez modelul pe setul de test
+    # Fac predicții pe setul de test
     y_test_pred = model.predict(X_test)
-    test_mse = mean_squared_error(y_test, y_test_pred)
-    test_mae = mean_absolute_error(y_test, y_test_pred)
-    test_r2 = r2_score(y_test, y_test_pred)
-    test_smape = np.mean(2 * np.abs(y_test_pred - y_test) / (np.abs(y_test_pred) + np.abs(y_test))) * 100
 
-    print(f"Cladire: {building_id}, MSE: {test_mse:.2f}, MAE: {test_mae:.2f}, R²: {test_r2:.2f}, SMAPE: {test_smape:.2f}%")
+    # Calculez metricile de performanaă (MSE, MAE, R², SMAPE)
+    mse = mean_squared_error(y_test, y_test_pred, multioutput='uniform_average')
+    mae = mean_absolute_error(y_test, y_test_pred, multioutput='uniform_average')
+    r2 = r2_score(y_test, y_test_pred, multioutput='uniform_average')
+    smape = np.mean(2 * np.abs(y_test_pred - y_test) / (np.abs(y_test_pred) + np.abs(y_test))) * 100
+
+    print(f"Rezultate pentru {building_id}: MSE={mse:.2f}, MAE={mae:.2f}, R²={r2:.2f}, SMAPE={smape:.2f}%")
+
+    # Salvez metricile în log
+    metrics_log.append([building_id, mse, mae, r2, smape])
+
+    # Ajustez dimensiunile pentru a fi egale
+    min_length = min(len(timestamps), len(y_test_pred.flatten()))
+    timestamps = timestamps[:min_length]
+    y_test_actual = y_test.flatten()[:min_length]
+    y_test_pred = y_test_pred.flatten()[:min_length]
+
+    # Construiesc DataFrame-ul corect
+    result = pd.DataFrame({
+        'timestamp': timestamps,
+        'actual': y_test_actual,
+        'predicted': y_test_pred,
+        'error': y_test_actual - y_test_pred
+    })
 
 
-# Realizez predictii pentru intreaga serie
-    all_predictions = model.predict(X)
+    result = result.drop_duplicates(subset=['timestamp']).sort_values(by='timestamp')
 
-    # Salvez rezultatele intr-un DataFrame
-    result = pd.DataFrame({'timestamp': building_data.index,
-                           'actual': y,
-                           'predicted': all_predictions,
-                           'error': y - all_predictions})
-
-    result['MSE'] = test_mse
-    result['MAE'] = test_mae
-    result['R2'] = test_r2
-    result['SMAPE'] = test_smape
-
-    # Salvez rezultatele intr-un folder separat pentru fiecare cladire
+    # Salvez în CSV
     building_folder = os.path.join(output_folder, f'building_{building_id}')
     os.makedirs(building_folder, exist_ok=True)
-
-    csv_output_path = os.path.join(building_folder, f'predicted_{building_id}.csv')
-    result.to_csv(csv_output_path, index=False)
+    result.to_csv(os.path.join(building_folder, f'RandomForest_24h_{building_id}.csv'), index=False)
 
     # Generez un grafic comparativ
     plt.figure(figsize=(12, 6))
@@ -110,7 +124,7 @@ for building_id in building_columns:
     plt.plot(result['timestamp'][:250], result['predicted'][:250], label='Valori Prezise', color='red')
     plt.xlabel('Data')
     plt.ylabel('Consum de energie')
-    plt.title(f'Predicție Daily Random Forest pentru {building_id}')
+    plt.title(f'Predictie Daily Random Forest pentru {building_id}')
     plt.legend()
     plt.xticks(rotation=45)
     plt.tight_layout()
@@ -118,5 +132,9 @@ for building_id in building_columns:
     graph_output_path = os.path.join(building_folder, f'graph_{building_id}.png')
     plt.savefig(graph_output_path)
     plt.close()
+
+# Salvez metricile intr-un fisier CSV
+metrics_df = pd.DataFrame(metrics_log, columns=['Building', 'MSE', 'MAE', 'R2', 'SMAPE'])
+metrics_df.to_csv('random_forest_metrics.csv', index=False)
 
 print("\nToate predictiile pentru cele 30 de cladiri au fost finalizate!")

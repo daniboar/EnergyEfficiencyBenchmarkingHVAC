@@ -12,6 +12,8 @@ data = data.iloc[:, :31]
 output_folder = 'random_forest_timeseries_predictions'
 os.makedirs(output_folder, exist_ok=True)
 
+metrics_log = []
+
 # 2. Funcție pentru generarea caracteristicilor temporale (sliding window)
 def create_time_series_features(df, target_column, window_size=3):
     df = df.copy()
@@ -77,8 +79,10 @@ for building_id in building_columns:
 
     print(f"Cladire: {building_id}, MSE: {test_mse:.2f}, MAE: {test_mae:.2f}, R^2: {test_r2:.2f}, SMAPE: {test_smape:.2f}%")
 
+    #Salvez metricile in log
+    metrics_log.append([building_id, test_mse, test_mae, test_r2, test_smape])
 
-# Realizez predicții pentru intreaga serie
+    # Realizez predicții pentru intreaga serie
     all_predictions = model.predict(X)
 
     # Salvez rezultatele într-un DataFrame
@@ -86,12 +90,6 @@ for building_id in building_columns:
                            'actual': y,
                            'predicted': all_predictions,
                            'error': y - all_predictions})
-
-    # Adaug metricile in CSV
-    result['MSE'] = test_mse
-    result['MAE'] = test_mae
-    result['R2'] = test_r2
-    result['SMAPE'] = test_smape
 
     building_folder = os.path.join(output_folder, f'building_{building_id}')
     os.makedirs(building_folder, exist_ok=True)
@@ -113,5 +111,9 @@ for building_id in building_columns:
     graph_output_path = os.path.join(building_folder, f'graph_{building_id}.png')
     plt.savefig(graph_output_path)
     plt.close()
+
+#Salvez metricile intr-un fisier CSV
+metrics_df = pd.DataFrame(metrics_log, columns=['Building', 'MSE', 'MAE', 'R2', 'SMAPE'])
+metrics_df.to_csv('random_forest_timeSeries_metrics.csv', index=False)
 
 print("\nToate predictiile pentru cele 30 de cladiri au fost finalizate!")
