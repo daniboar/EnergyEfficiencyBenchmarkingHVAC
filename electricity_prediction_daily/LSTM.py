@@ -32,8 +32,9 @@ class LSTMModel(nn.Module):
 # Definesc datasetul pentru Torch
 class TimeSeriesDataset(Dataset):
     def __init__(self, X, y):
-        self.X = torch.tensor(X.values, dtype=torch.float32)
-        self.y = torch.tensor(y.values, dtype=torch.float32).view(-1, 1)
+        self.X = torch.tensor(X.values.astype(np.float32))
+        self.y = torch.tensor(y.values.astype(np.float32)).view(-1, 1)
+
 
     def __len__(self):
         return len(self.X)
@@ -42,34 +43,49 @@ class TimeSeriesDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 
+#Functie pentru caracteristici zilnice
+def create_daily_features(df, target_column):
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
+    df.set_index('timestamp', inplace=True)
+
+    # Agregam prin medie
+    df_daily = df.resample('D').mean()
+
+    # Lag features (valori anterioare)
+    for lag in range(1, 4):  # 3 zile anterioare
+        df_daily[f'lag_{lag}'] = df_daily[target_column].shift(lag)
+
+    # Caracteristici temporale
+    df_daily['day'] = df_daily.index.day
+    df_daily['month'] = df_daily.index.month
+    df_daily['day_of_year'] = df_daily.index.dayofyear  # Ziua din an (1-365)
+    df_daily['week_of_year'] = df_daily.index.isocalendar().week  # Saptamana anului (1-52)
+    df_daily['weekday'] = df_daily.index.weekday
+    df_daily['is_weekend'] = df_daily['weekday'].apply(lambda x: 1 if x >= 5 else 0)
+
+    # Anotimpuri (1 = iarna, 2 = primavara, 3 = vara, 4 = toamna)
+    df_daily['season'] = df_daily['month'].apply(
+        lambda x: 1 if x in [12, 1, 2] else 2 if x in [3, 4, 5] else 3 if x in [6, 7, 8] else 4
+    )
+
+    # One-hot encoding pentru ziua saptamanii si sezon
+    df_daily = pd.get_dummies(df_daily, columns=['weekday', 'season'])
+
+    df_daily.dropna(inplace=True)
+    return df_daily
+
 # 3. Iterez prin cele 30 de cladiri
 building_columns = data.columns[1:31]
 
 cnt = 0
 for building_id in building_columns:
     cnt += 1
-    print(f"\n Procesez clădirea {cnt}: {building_id}")
+    print(f"\n Procesez cladirea {cnt}: {building_id}")
 
     building_data = data[['timestamp', building_id]].dropna()
 
-    # Convertesc timestamp-ul in datetime si le selectez la nivel de zi
-    building_data['timestamp'] = pd.to_datetime(building_data['timestamp'])
-    building_data.set_index('timestamp', inplace=True)
-    building_data = building_data.resample('D').mean().dropna()  # Media zilnica + eliminare NaN
-
-    # Caracteristici temporale
-    building_data['day'] = building_data.index.day
-    building_data['month'] = building_data.index.month
-    building_data['weekday'] = building_data.index.weekday
-    building_data['is_weekend'] = building_data['weekday'].apply(lambda x: 1 if x >= 5 else 0)
-
-    # Sezon (1 = iarna, 2 = primăvara, 3 = vara, 4 = toamna)
-    building_data['season'] = building_data['month'].apply(
-        lambda x: 1 if x in [12, 1, 2] else 2 if x in [3, 4, 5] else 3 if x in [6, 7, 8] else 4
-    )
-
-    # One-hot encoding pentru ziua saptamanii si sezon
-    building_data = pd.get_dummies(building_data, columns=['weekday', 'season'])
+    # Convertesc timestamp-ul in datetime si aplic caracteristici
+    building_data = create_daily_features(building_data, building_id)
 
     # Separ X și y
     X = building_data.drop(columns=[building_id])

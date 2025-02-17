@@ -61,13 +61,12 @@ for building_id in building_columns:
     X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, shuffle=False)
 
     # Construim modelul Random Forest
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42)
     model.fit(X_train, y_train)
 
     # Evaluez modelul pe setul de validare
     y_val_pred = model.predict(X_val)
     val_mse = mean_squared_error(y_val, y_val_pred)
-    print(f"Mean Squared Error (MSE) pe setul de validare: {val_mse:.2f}")
 
     # Evaluez modelul pe setul de test
     y_test_pred = model.predict(X_test)
@@ -76,13 +75,10 @@ for building_id in building_columns:
     test_r2 = r2_score(y_test, y_test_pred)
     test_smape = np.mean(2 * np.abs(y_test_pred - y_test) / (np.abs(y_test_pred) + np.abs(y_test))) * 100
 
-    print(f"Test Metrics pentru {building_id}:")
-    print(f"  - MSE: {test_mse:.2f}")
-    print(f"  - MAE: {test_mae:.2f}")
-    print(f"  - R²: {test_r2:.2f}")
-    print(f"  - SMAPE: {test_smape:.2f}%")
+    print(f"Cladire: {building_id}, MSE: {test_mse:.2f}, MAE: {test_mae:.2f}, R^2: {test_r2:.2f}, SMAPE: {test_smape:.2f}%")
 
-    # Realizez predicții pentru intreaga serie
+
+# Realizez predicții pentru intreaga serie
     all_predictions = model.predict(X)
 
     # Salvez rezultatele într-un DataFrame

@@ -41,6 +41,30 @@ class TimeSeriesDataset(Dataset):
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
 
+# Functie pentru generarea caracteristicilor temporale (sliding window)
+def create_time_series_features(df, target_column, window_size=3):
+    df = df.copy()
+    for lag in range(1, window_size + 1):
+        df[f'lag_{lag}'] = df[target_column].shift(lag)
+
+    # Caracteristici temporale
+    df['hour'] = df.index.hour
+    df['day'] = df.index.day
+    df['month'] = df.index.month
+    df['weekday'] = df.index.weekday
+    df['is_weekend'] = df['weekday'].apply(lambda x: 1 if x >= 5 else 0)  # Weekend: sambata/duminica
+
+    # Sezon (1 = iarna, 2 = primavara, 3 = vara, 4 = toamna)
+    df['season'] = df['month'].apply(
+        lambda x: 1 if x in [12, 1, 2] else 2 if x in [3, 4, 5] else 3 if x in [6, 7, 8] else 4
+    )
+
+    # One-hot encoding pentru ziua saptamanii si sezon
+    df = pd.get_dummies(df, columns=['weekday', 'season'])
+
+    df.dropna(inplace=True)
+    return df
+
 
 # 3. Iterez prin cele 30 de cladiri pentru a face predictia si salvarea in CSV
 building_columns = data.columns[1:31]
@@ -56,20 +80,9 @@ for building_id in building_columns:
     building_data.set_index('timestamp', inplace=True)
 
     # Caracteristici temporale de baza
-    building_data['hour'] = building_data.index.hour
-    building_data['day'] = building_data.index.day
-    building_data['month'] = building_data.index.month
-    building_data['weekday'] = building_data.index.weekday
-    building_data['is_weekend'] = building_data['weekday'].apply(lambda x: 1 if x >= 5 else 0)
+    building_data = create_time_series_features(building_data, building_id, window_size=3)
 
-    # Adaug sezonul (1 = iarna, 2 = primăvara, 3 = vara, 4 = toamna)
-    building_data['season'] = building_data['month'].apply(
-        lambda x: 1 if x in [12, 1, 2] else 2 if x in [3, 4, 5] else 3 if x in [6, 7, 8] else 4
-    )
-
-    # Convertesc 'weekday' in valori numerice folosind one-hot encoding
-    building_data = pd.get_dummies(building_data, columns=['weekday', 'season'])
-
+    # Separ X și y
     X = building_data.drop(columns=[building_id])
     y = building_data[building_id]
 

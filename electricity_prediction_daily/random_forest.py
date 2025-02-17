@@ -21,6 +21,10 @@ def aggregate_daily(df, target_column):
     # Agregam prin medie
     df_daily = df.resample('D').mean()
 
+    # Lag features (valori anterioare)
+    for lag in range(1, 4):  # 3 zile anterioare
+        df_daily[f'lag_{lag}'] = df_daily[target_column].shift(lag)
+
     # Caracteristici temporale
     df_daily['day'] = df_daily.index.day
     df_daily['month'] = df_daily.index.month
@@ -34,10 +38,6 @@ def aggregate_daily(df, target_column):
         lambda x: 1 if x in [12, 1, 2] else 2 if x in [3, 4, 5] else 3 if x in [6, 7, 8] else 4
     )
 
-    # Lag features (valori anterioare)
-    for lag in range(1, 4):  # 3 zile anterioare
-        df_daily[f'lag_{lag}'] = df_daily[target_column].shift(lag)
-
     # One-hot encoding pentru ziua saptamanii si sezon
     df_daily = pd.get_dummies(df_daily, columns=['weekday', 'season'])
 
@@ -48,8 +48,10 @@ def aggregate_daily(df, target_column):
 # 3. Iterez prin cele 30 de cladiri
 building_columns = data.columns[1:31]
 
+cnt = 0
 for building_id in building_columns:
-    print(f"\nProcesez cladirea: {building_id}")
+    cnt += 1
+    print(f"\nProcesez cladirea {cnt}: {building_id}")
     building_data = data[['timestamp', building_id]].dropna()
 
     # Prelucrez datele la nivel de zi + adaug caracteristici avansate
@@ -78,13 +80,10 @@ for building_id in building_columns:
     test_r2 = r2_score(y_test, y_test_pred)
     test_smape = np.mean(2 * np.abs(y_test_pred - y_test) / (np.abs(y_test_pred) + np.abs(y_test))) * 100
 
-    print(f"Test Metrics pentru {building_id}:")
-    print(f"  - MSE: {test_mse:.2f}")
-    print(f"  - MAE: {test_mae:.2f}")
-    print(f"  - R²: {test_r2:.2f}")
-    print(f"  - SMAPE: {test_smape:.2f}%")
+    print(f"Cladire: {building_id}, MSE: {test_mse:.2f}, MAE: {test_mae:.2f}, R²: {test_r2:.2f}, SMAPE: {test_smape:.2f}%")
 
-    # Realizez predictii pentru intreaga serie
+
+# Realizez predictii pentru intreaga serie
     all_predictions = model.predict(X)
 
     # Salvez rezultatele intr-un DataFrame

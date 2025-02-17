@@ -88,7 +88,7 @@ for building_id in building_columns:
     # Caracteristici temporale de baza
     building_data = create_time_series_features(building_data, building_id, window_size=3)
 
-    # Separăm X și y
+    # Separ X și y
     X = building_data.drop(columns=[building_id])
     y = building_data[building_id]
 
