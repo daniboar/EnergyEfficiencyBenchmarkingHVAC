@@ -76,7 +76,7 @@ def create_time_series_features(df, target_column, lookback_days):
     return df
 
 
-# 3. Iterez prin cele 30 de cladiri si antrenez modelul
+# 5. Iterez prin cele 30 de cladiri si antrenez modelul
 for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     print(f"\nProcesare pentru cladirea: {building_id}")
 
@@ -115,13 +115,13 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     val_dataset = TimeSeriesDataset(X_val, y_val)
     test_dataset = TimeSeriesDataset(X_test, y_test)
 
-    train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=128, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
     # Construiesc modelul LSTM
     input_dim = X.shape[1]
-    hidden_dim = 128
+    hidden_dim = 256
     output_dim = PREDICTION_HORIZON  # 24 de iesiri
     num_layers = 3
 
