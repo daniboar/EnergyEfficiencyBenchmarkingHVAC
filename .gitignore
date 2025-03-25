@@ -2,3 +2,6 @@
 .DS_Store
 .venv
 electricity_cleaned.csv
+electricity_30.csv
+wather_Panther.csv
+test.py
