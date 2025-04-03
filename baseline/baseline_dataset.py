@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import make_interp_spline
 
-csv_file = '../electricity_30.csv'
+csv_file = '../electricity_30_kWh.csv'
 output_folder = 'baselines_dataset'
 os.makedirs(output_folder, exist_ok=True)
 

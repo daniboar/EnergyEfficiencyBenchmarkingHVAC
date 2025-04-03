@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 # 1. Incarc datele din csv, si aleg primele 30 de cladiri + timestamp-ul
-data = pd.read_csv('electricity_cleaned.csv')
+data = pd.read_csv('electricity_cleaned_kWh.csv')
 data = data.iloc[:, :31]
 output_folder = 'mlp_daily_predictions'
 os.makedirs(output_folder, exist_ok=True)

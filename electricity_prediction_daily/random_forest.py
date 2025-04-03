@@ -8,14 +8,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 # 1. Incarc datele din csv
-data = pd.read_csv('electricity_cleaned.csv')
+data = pd.read_csv('electricity_cleaned_kWh.csv')
 data = data.iloc[:, :31]  # Timestamp + primele 30 de clădiri
 output_folder = 'random_forest_daily_predictions'
 os.makedirs(output_folder, exist_ok=True)
 
 # Parametrii modelului
 LOOKBACK_DAYS = 3  # Folosesc ultimele 3 zile (3 * 24 ore) pentru predicție
-PREDICTION_HORIZON = 24  # Vreau sa prezic pentru urmatoareal 24 de ore
+PREDICTION_HORIZON = 24  # Vreau sa prezic pentru urmatoarele 24 de ore
 
 metrics_log = []
 
@@ -70,7 +70,6 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     # Adaug timestamp-urile intr-o singura lista (flatten)
     timestamps = [ts for sublist in timestamps for ts in sublist]
 
-
     X = np.array(X)
     y = np.array(y)
 
@@ -109,7 +108,6 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
         'predicted': y_test_pred,
         'error': y_test_actual - y_test_pred
     })
-
 
     result = result.drop_duplicates(subset=['timestamp']).sort_values(by='timestamp')
 

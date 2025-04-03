@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 
 ROLLING_DAYS = 7  # numarul de zile anterioare
-csv_file = '../electricity_30.csv'
+csv_file = '../electricity_30_kWh.csv'
 output_folder = 'baselines_days_output'
 os.makedirs(output_folder, exist_ok=True)
 

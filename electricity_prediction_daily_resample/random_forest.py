@@ -7,7 +7,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import numpy as np
 
 # 1. Incarc datele din csv, si aleg primele 30 de cladiri + timestamp-ul
-data = pd.read_csv('electricity_cleaned.csv')
+data = pd.read_csv('electricity_cleaned_kWh.csv')
 data = data.iloc[:, :31]  # Timestamp + primele 30 de cladiri
 output_folder = 'random_forest_daily_predictions'
 os.makedirs(output_folder, exist_ok=True)
