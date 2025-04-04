@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 import os
-import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
 import torch
 import torch.nn as nn
+import joblib
 from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
@@ -63,7 +63,8 @@ def create_time_series_features(df, target_column, lookback_days):
     df['is_weekend'] = df['weekday'].apply(lambda x: 1 if x >= 5 else 0)
 
     # Anotimpuri
-    df['season'] = df['month'].apply(lambda x: 1 if x in [12, 1, 2] else 2 if x in [3, 4, 5] else 3 if x in [6, 7, 8] else 4)
+    df['season'] = df['month'].apply(
+        lambda x: 1 if x in [12, 1, 2] else 2 if x in [3, 4, 5] else 3 if x in [6, 7, 8] else 4)
 
     # One-hot encoding pentru ziua saptamanii si sezon
     df = pd.get_dummies(df, columns=['weekday', 'season'])
@@ -75,7 +76,6 @@ def create_time_series_features(df, target_column, lookback_days):
     df.dropna(inplace=True)
     return df
 
-
 # 5. Iterez prin cele 30 de cladiri si antrenez modelul
 for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     print(f"\nProcesare pentru cladirea: {building_id}")
@@ -85,82 +85,67 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     # Creez setul de date cu caracteristici temporale
     building_data = create_time_series_features(building_data, building_id, LOOKBACK_DAYS)
 
-    # Construiesc X (input) și y (output)
-    X, y, timestamps = [], [], []
-    for i in range(len(building_data) - PREDICTION_HORIZON):
-        X.append(building_data.iloc[i].values)
-        y.append(building_data[building_id].iloc[i + 1: i + 1 + PREDICTION_HORIZON].values)
+    # Salvam separat target-ul si features
+    feature_data = building_data.drop(columns=[building_id])
+    target_data = building_data[building_id]
 
-        # Salvez toate cele 24 de timestamp-uri asociate predicției
-        timestamps.append(building_data.index[i + 1: i + 1 + PREDICTION_HORIZON].tolist())
-
-    # Adaug timestamp-urile intr-o singura lista (flatten)
-    timestamps = [ts for sublist in timestamps for ts in sublist]
-
-    X = np.array(X)
-    y = np.array(y)
-
-    # Normalizez X si y cu MinMaxScaler
+    # Normalizez X si y
     scaler_X = MinMaxScaler()
     scaler_y = MinMaxScaler()
-    X = scaler_X.fit_transform(X)
-    y = scaler_y.fit_transform(y)
+    X = scaler_X.fit_transform(feature_data)
+    y = scaler_y.fit_transform(target_data.values.reshape(-1, 1))
 
-    # Impart datele în train (80%), validare (10%), test (10%)
-    X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
+    # Construiesc X si y secvențial pentru predicție pe 24 ore
+    X_seq, y_seq, timestamps = [], [], []
+    for i in range(len(X) - PREDICTION_HORIZON):
+        X_seq.append(X[i])
+        y_seq.append(y[i + 1: i + 1 + PREDICTION_HORIZON].flatten())
+        timestamps.append(building_data.index[i + 1: i + 1 + PREDICTION_HORIZON].tolist())
+
+    X_seq = np.array(X_seq)
+    y_seq = np.array(y_seq)
+
+    # Train/Val/Test split
+    X_train, X_temp, y_train, y_temp = train_test_split(X_seq, y_seq, test_size=0.2, random_state=42, shuffle=False)
     X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, shuffle=False)
 
-    # Creez dataseturile pentru PyTorch
-    train_dataset = TimeSeriesDataset(X_train, y_train)
-    val_dataset = TimeSeriesDataset(X_val, y_val)
-    test_dataset = TimeSeriesDataset(X_test, y_test)
+    train_loader = DataLoader(TimeSeriesDataset(X_train, y_train), batch_size=64, shuffle=True)
+    val_loader = DataLoader(TimeSeriesDataset(X_val, y_val), batch_size=64, shuffle=False)
+    test_loader = DataLoader(TimeSeriesDataset(X_test, y_test), batch_size=64, shuffle=False)
 
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
-
-    # Construiesc modelul LSTM
+    # Model
     input_dim = X.shape[1]
-    hidden_dim = 256
-    output_dim = PREDICTION_HORIZON  # 24 de iesiri
-    num_layers = 3
-
-    model = LSTMModel(input_dim, hidden_dim, output_dim, num_layers)
+    model = LSTMModel(input_dim=input_dim, hidden_dim=256, output_dim=PREDICTION_HORIZON, num_layers=3)
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
-    # Antrenarea modelului
-    epochs = 200
-    train_losses, val_losses = [], []
-    for epoch in range(epochs):
+    # Antrenare
+    for epoch in range(200):
         model.train()
-        train_loss = 0.0
-        val_loss = 0.0
+        total_loss = 0
         for X_batch, y_batch in train_loader:
             optimizer.zero_grad()
-            y_pred = model(X_batch)
-            loss = criterion(y_pred, y_batch)
+            output = model(X_batch)
+            loss = criterion(output, y_batch)
             loss.backward()
             optimizer.step()
-            train_loss += loss.item()
+            total_loss += loss.item()
+        print(f"Epoch {epoch + 1}/200 - Train Loss: {total_loss / len(train_loader):.4f}")
 
-        train_loss /= len(train_loader)
-        train_losses.append(train_loss)
+    # Salvare model si scalere
+    model_folder = os.path.join('modele salvate LSTM', building_id)
+    os.makedirs(model_folder, exist_ok=True)
+    torch.save(model.state_dict(), os.path.join(model_folder, 'lstm_model.pt'))
+    joblib.dump(scaler_X, os.path.join(model_folder, 'scaler_X.pkl'))
+    joblib.dump(scaler_y, os.path.join(model_folder, 'scaler_y.pkl'))
 
-        #Evaluarea pe setul de validare
-        model.eval()
-        val_loss = 0.0
-        with torch.no_grad():
-            for X_batch, y_batch in val_loader:
-                y_pred = model(X_batch)
-                val_loss += criterion(y_pred, y_batch).item()
+    with open(os.path.join(model_folder, 'features.txt'), 'w') as f:
+        for col in feature_data.columns:
+            f.write(f"{col}\n")
 
-        val_loss /= len(val_loader)
-        val_losses.append(val_loss)
+    print(f"Model salvat pentru {building_id} in {model_folder}")
 
-    print(f"\nCladire: {building_id} | Loss Final - Train: {train_loss:.4f}, Val: {val_loss:.4f}")
-
-    # Evaluare pe setul de test
+    # Evaluare
     model.eval()
     y_test_pred = []
     y_test_actual = []
@@ -170,63 +155,21 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
             y_test_pred.append(y_pred.numpy())
             y_test_actual.append(y_batch.numpy())
 
-
-    y_test_pred = np.concatenate(y_test_pred, axis=0)
-    y_test_actual = np.concatenate(y_test_actual, axis=0)
-
+    y_test_pred = np.concatenate(y_test_pred)
+    y_test_actual = np.concatenate(y_test_actual)
     y_test_pred = scaler_y.inverse_transform(y_test_pred)
     y_test_actual = scaler_y.inverse_transform(y_test_actual)
 
-    # Calcul metrici
-    mse = mean_squared_error(y_test_actual, y_test_pred, multioutput='uniform_average')
-    mae = mean_absolute_error(y_test_actual, y_test_pred, multioutput='uniform_average')
-    r2 = r2_score(y_test_actual, y_test_pred, multioutput='uniform_average')
+    mse = mean_squared_error(y_test_actual, y_test_pred)
+    mae = mean_absolute_error(y_test_actual, y_test_pred)
+    r2 = r2_score(y_test_actual, y_test_pred)
     smape = np.mean(2 * np.abs(y_test_pred - y_test_actual) / (np.abs(y_test_pred) + np.abs(y_test_actual))) * 100
 
-    print(f" Cladire: {building_id}, MSE: {mse:.2f}, MAE: {mae:.2f}, R²: {r2:.2f}, SMAPE: {smape:.2f}%")
-
-    #Salvez metricile in log
     metrics_log.append([building_id, mse, mae, r2, smape])
+    print(f"{building_id} | MSE: {mse:.2f}, MAE: {mae:.2f}, R²: {r2:.2f}, SMAPE: {smape:.2f}%")
 
-    # Ajustez dimensiunile pentru a fi egale
-    min_length = min(len(timestamps), len(y_test_pred.flatten()))
-    timestamps = timestamps[:min_length]
-    y_test_actual = y_test_actual.flatten()[:min_length]
-    y_test_pred = y_test_pred.flatten()[:min_length]
-
-    # Construiesc DataFrame-ul corect
-    result = pd.DataFrame({
-        'timestamp': timestamps,
-        'actual': y_test_actual,
-        'predicted': y_test_pred,
-        'error': y_test_actual - y_test_pred
-    })
-
-    result = result.drop_duplicates(subset=['timestamp']).sort_values(by='timestamp')
-
-    #Salvez in CSV
-    building_folder = os.path.join(output_folder, f'building_{building_id}')
-    os.makedirs(building_folder, exist_ok=True)
-    result.to_csv(os.path.join(building_folder, f'LSTM_24h_{building_id}.csv'), index=False)
-
-
-    # Grafic rezultate
-    plt.figure(figsize=(12, 6))
-    plt.plot(result['timestamp'][:250], result['actual'][:250], label='Valori Reale', color='blue')
-    plt.plot(result['timestamp'][:250], result['predicted'][:250], label='Valori Prezise', color='red')
-    plt.xlabel('Zi')
-    plt.ylabel('Consum de energie')
-    plt.title(f'Predictie zilnica LSTM pentru {building_id}')
-    plt.legend()
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-
-    plt.savefig(os.path.join(building_folder, f'LSTM_daily_graph_{building_id}.png'))
-    plt.close()
-
-#Salvez metricile intr-un fisier CSV
+# Salvare metrici
 metrics_df = pd.DataFrame(metrics_log, columns=['Building', 'MSE', 'MAE', 'R2', 'SMAPE'])
 metrics_df.to_csv('lstm_metrics.csv', index=False)
 
-print("\nToate predictiile pentru cele 30 de cladiri au fost finalizate!")
-
+print("\nToate modelele au fost antrenate si salvate corect!")
