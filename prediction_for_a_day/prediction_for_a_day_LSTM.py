@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 # === CONFIG ===
 DATA_PATH = '../electricity_cleaned_kWh.csv'
+WEATHER_PATH = '../weather_Panther.csv'
 MODELS_DIR = '../electricity_prediction_daily/modele salvate LSTM'
 LOOKBACK_DAYS = 3
 PREDICTION_HORIZON = 24
@@ -54,10 +55,18 @@ def predict_energy_for_day(building_id: str, target_date: str):
     output_folder = os.path.join(OUTPUT_DIR, building_id)
     os.makedirs(output_folder, exist_ok=True)
 
-    # Incarc datele
+    # Incarc datele de consum
     df = pd.read_csv(DATA_PATH)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df = df[['timestamp', building_id]].dropna()
+
+    # Incarc datele de vreme
+    weather_df = pd.read_csv(WEATHER_PATH)
+    weather_df['timestamp'] = pd.to_datetime(weather_df['timestamp'])
+    weather_df = weather_df[['timestamp', 'airTemperature', 'dewTemperature']]
+
+    # Combin energie + vreme
+    df = df.merge(weather_df, on='timestamp', how='left')
     df.set_index('timestamp', inplace=True)
 
     # Selectez intervalul necesar (cu 1 zi extra)
@@ -65,7 +74,7 @@ def predict_energy_for_day(building_id: str, target_date: str):
     df_subset = df.loc[start_date - pd.Timedelta(hours=24): target_date - pd.Timedelta(hours=1)].copy()
 
     if df_subset.empty:
-        print("Nu sunt suficiente date pentru această perioad.")
+        print("Nu sunt suficiente date pentru aceasta perioada.")
         return
 
     # Feature engineering
@@ -104,31 +113,59 @@ def predict_energy_for_day(building_id: str, target_date: str):
 
     # Rezultate
     df_result = pd.DataFrame({
-        'hour': list(range(24)),
         'timestamp': timestamps,
-        'predicted_consumption': y_pred
+        'hour': list(range(24)),
+        'predicted_consumption': y_pred,
+        'actual_consumption': [np.nan] * 24
     })
 
-    # Salvare CSV + Plot
-    csv_path = os.path.join(output_folder, f'prediction_{building_id}_{target_date.date()}_{day_name}.csv')
-    png_path = os.path.join(output_folder, f'prediction_{building_id}_{target_date.date()}_{day_name}.png')
+    # Incarc si compar cu valorile reale, daca exista
+    try:
+        real_df = pd.read_csv(DATA_PATH)
+        real_df['timestamp'] = pd.to_datetime(real_df['timestamp'])
+        real_day = real_df[['timestamp', building_id]]
+        real_day = real_day.set_index('timestamp').loc[target_date:target_date + pd.Timedelta(hours=23)].copy()
 
-    df_result.to_csv(csv_path, index=False)
+        if not real_day.empty and len(real_day) == 24:
+            df_result['actual_consumption'] = real_day[building_id].values
 
+            # === GRAFIC COMPARATIV ===
+            plt.figure(figsize=(12, 5))
+            plt.plot(df_result['hour'], df_result['actual_consumption'], marker='o', color='blue', label='Consum real')
+            plt.plot(df_result['hour'], df_result['predicted_consumption'], marker='o', color='green',
+                     label='Consum Prezis')
+            plt.title(f'Comparatie Real vs Predictie - {building_id} - {target_date.date()}')
+            plt.xlabel('Ora (0-23)')
+            plt.ylabel('Consum (kWh)')
+            plt.grid(True)
+            plt.legend()
+            plt.xticks(np.arange(0, 24, 1))
+            plt.tight_layout()
+            plt.savefig(
+                os.path.join(output_folder, f'consumption_vs_prediction__{building_id}_{target_date.date()}.png'))
+            plt.close()
+    except Exception as e:
+        print(f"[!] Nu am putut incarca consumul real: {e}")
+
+    # === GRAFIC DOAR PREDICTIE ===
     plt.figure(figsize=(12, 5))
-    plt.plot(df_result['hour'], df_result['predicted_consumption'], marker='o', color='green')
-    plt.title(f'Predictie pentru {building_id} - {target_date.date()} ({day_name})')
+    plt.plot(df_result['hour'], df_result['predicted_consumption'], marker='o', color='green', label='Consum Prezis')
+    plt.title(f'Consum prezis pentru {building_id} - {target_date.date()} ({day_name})')
     plt.xlabel('Ora (0-23)')
     plt.ylabel('Consum estimat (kWh)')
     plt.grid(True)
     plt.xticks(np.arange(0, 24, 1))
     plt.tight_layout()
-    plt.savefig(png_path)
+    plt.savefig(os.path.join(output_folder, f'prediction_{building_id}_{target_date.date()}.png'))
     plt.close()
+
+    # === Salvare CSV ===
+    csv_path = os.path.join(output_folder, f'prediction_{building_id}_{target_date.date()}_{day_name}.csv')
+    df_result.to_csv(csv_path, index=False)
 
     print(f"Predictia pentru {building_id} ({target_date.date()}) salvata în {output_folder}")
 
 
 # MAIN FUNCTION
 if __name__ == '__main__':
-    predict_energy_for_day('Panther_parking_Lorriane', '2018-01-01')
+    predict_energy_for_day('Panther_office_Catherine', '2017-12-14')

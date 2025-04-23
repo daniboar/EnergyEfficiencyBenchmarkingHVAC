@@ -1,3 +1,5 @@
+airTemperature
+dewTemperature
 hour
 day
 month

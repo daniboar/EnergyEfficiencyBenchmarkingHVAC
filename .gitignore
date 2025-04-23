@@ -3,7 +3,7 @@
 .venv
 electricity_cleaned.csv
 electricity_30.csv
-wather_Panther.csv
+weather_Panther.csv
 test.py
 test2_.py
 electricity_panther.csv
@@ -12,3 +12,5 @@ test_optimizare.py
 electricity_30_kWh.csv
 electricity_cleaned_kWh.csv
 lista_cladiri.txt
+/optimization_model_V1
+/optimization_model_V2

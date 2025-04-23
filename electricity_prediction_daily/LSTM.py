@@ -10,30 +10,33 @@ from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-# 1. Incarc datele din csv
+# 1. Incarc datele
 data = pd.read_csv('electricity_cleaned_kWh.csv')
+weather = pd.read_csv('../weather_Panther.csv')
 data = data.iloc[:, :31]  # Timestamp + primele 30 de cladiri
+data['timestamp'] = pd.to_datetime(data['timestamp'])
+weather['timestamp'] = pd.to_datetime(weather['timestamp'])
+weather = weather[['timestamp', 'airTemperature', 'dewTemperature']]
+
+# Setari
+LOOKBACK_DAYS = 3
+PREDICTION_HORIZON = 24
 output_folder = 'lstm_daily_predictions'
 os.makedirs(output_folder, exist_ok=True)
-
-# Parametrii modelului
-LOOKBACK_DAYS = 3  # Folosesc ultimele 3 zile (3 * 24 ore) pentru predicție
-PREDICTION_HORIZON = 24  # Vreau sa prezic pentru urmatoareal 24 de ore
-
 metrics_log = []
 
-# 2. Model LSTM
+
+# Model LSTM
 class LSTMModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers, dropout=0.2):
-        super(LSTMModel, self).__init__()
+        super().__init__()
         self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout)
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
         x = x.unsqueeze(1)
-        lstm_out, _ = self.lstm(x)
-        out = self.fc(lstm_out[:, -1, :])
-        return out
+        out, _ = self.lstm(x)
+        return self.fc(out[:, -1, :])
 
 
 # 3. Dataset pentru PyTorch
@@ -48,9 +51,11 @@ class TimeSeriesDataset(Dataset):
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
 
+
 # 4. Functie pentru caracteristicile temporale
-def create_time_series_features(df, target_column, lookback_days):
+def create_time_series_features(df, target_column, weather_df, lookback_days):
     df['timestamp'] = pd.to_datetime(df['timestamp'])
+    df = df.merge(weather_df, on='timestamp', how='left')
     df.set_index('timestamp', inplace=True)
 
     # Caracteristici temporale
@@ -76,6 +81,7 @@ def create_time_series_features(df, target_column, lookback_days):
     df.dropna(inplace=True)
     return df
 
+
 # 5. Iterez prin cele 30 de cladiri si antrenez modelul
 for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     print(f"\nProcesare pentru cladirea: {building_id}")
@@ -83,7 +89,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     building_data = data[['timestamp', building_id]].dropna()
 
     # Creez setul de date cu caracteristici temporale
-    building_data = create_time_series_features(building_data, building_id, LOOKBACK_DAYS)
+    building_data = create_time_series_features(building_data, building_id, weather, LOOKBACK_DAYS)
 
     # Salvam separat target-ul si features
     feature_data = building_data.drop(columns=[building_id])
