@@ -49,10 +49,11 @@ def create_features(df, target_column):
 
 # === FUNCTIA PRINCIPALA ===
 def predict_energy_for_day(building_id: str, target_date: str):
+    base_dir = os.path.dirname(os.path.realpath(__file__))
     target_date = pd.Timestamp(target_date)
     OUTPUT_DIR = f'prediction_for_{target_date.date()}_{target_date.strftime("%A")}'
-    model_folder = os.path.join(MODELS_DIR, building_id)
-    output_folder = os.path.join(OUTPUT_DIR, building_id)
+    model_folder = os.path.join(base_dir, MODELS_DIR, building_id)
+    output_folder = os.path.join(base_dir, OUTPUT_DIR, building_id)
     os.makedirs(output_folder, exist_ok=True)
 
     # Incarc datele de consum
@@ -163,9 +164,9 @@ def predict_energy_for_day(building_id: str, target_date: str):
     csv_path = os.path.join(output_folder, f'prediction_{building_id}_{target_date.date()}_{day_name}.csv')
     df_result.to_csv(csv_path, index=False)
 
-    print(f"Predictia pentru {building_id} ({target_date.date()}) salvata în {output_folder}")
+    print(f"Predictia pentru {building_id} ({target_date.date()}) a fost salvata în {output_folder}")
 
 
 # MAIN FUNCTION
 if __name__ == '__main__':
-    predict_energy_for_day('Panther_office_Catherine', '2017-12-14')
+    predict_energy_for_day('Panther_education_Tina', '2017-12-14')
