@@ -61,9 +61,23 @@ def compare_optimizations(building_id: str, target_date: str):
     plt.close()
     print(f"Grafic comparativ salvat in: {plot_path}")
 
+    # Salvare CSV comparativ
+    df_final = pd.DataFrame({
+        "hour": df_ga["hour"],
+        "real_R(t)": df_ga["real_R(t)"],
+        "predicted_P(t)": df_ga["predicted_P(t)"],
+        "baseline_B(t)": df_ga["baseline_B(t)"],
+        "P(t)_adjusted_GA": df_ga["P(t)_adjusted_GA"],
+        "P(t)_adjusted_PSO": df_pso["P(t)_adjusted_PSO"],
+        "P(t)_adjusted_ACO": df_aco["P(t)_adjusted_ACO"],
+    })
+
+    csv_path = os.path.join(plot_output_dir, f"comparatie_tabel_{building_id}_{target_date}_{date_day.day_name()}.csv")
+    df_final.to_csv(csv_path, index=False)
+    print(f"CSV comparativ salvat in: {csv_path}")
 
 if __name__ == "__main__":
     compare_optimizations(
-        building_id="Panther_office_Karla",
-        target_date="2017-12-14"
+        building_id="Panther_office_Catherine",
+        target_date="2017-12-12"
     )
