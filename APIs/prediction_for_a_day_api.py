@@ -19,6 +19,8 @@ def populate_buildings(building_list):
 
 
 @swag_from({
+    'tags': ['prediction'],
+    'description': 'Endpoint that calculate prediction for a day and actual consumption',
     'parameters': [
         {
             'name': 'building_name',
@@ -92,6 +94,8 @@ def predict_one(building_name, target_date):
 
 
 @swag_from({
+    'tags': ['prediction'],
+    'description': 'Endpoint that returns my prediction for a day from the db',
     'parameters': [
         {
             'name': 'building_name',
@@ -135,6 +139,8 @@ def get_prediction(building_name, target_date):
 
 
 @swag_from({
+    'tags': ['real-consumption'],
+    'description': 'Endpoint that returns the real cosumption for a day from the db',
     'parameters': [
         {
             'name': 'building_name',
