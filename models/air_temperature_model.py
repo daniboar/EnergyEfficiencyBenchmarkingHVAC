@@ -1,13 +1,12 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Date, Float, PrimaryKeyConstraint
+from sqlalchemy import Column, Date, Float, PrimaryKeyConstraint
 
 Base = declarative_base()
 
 
-class Prediction(Base):
-    __tablename__ = 'predictions'
+class AirTemperature(Base):
+    __tablename__ = 'airtemperature'
 
-    building_name = Column(String, nullable=False)
     target_date = Column(Date, nullable=False)
 
     h0 = Column(Float)
@@ -34,11 +33,7 @@ class Prediction(Base):
     h21 = Column(Float)
     h22 = Column(Float)
     h23 = Column(Float)
-    mse = Column(Float)
-    mae = Column(Float)
-    smape = Column(Float)
-    r2 = Column(Float)
 
     __table_args__ = (
-        PrimaryKeyConstraint('building_name', 'target_date'),
+        PrimaryKeyConstraint('target_date'),
     )
