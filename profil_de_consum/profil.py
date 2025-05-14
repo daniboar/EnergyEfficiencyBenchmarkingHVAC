@@ -45,7 +45,13 @@ def generate_energy_profile(building_id: str, target_date: str):
         'hour': baseline['hour'],
         'baseline_B(t)': baseline['B(t)'],
         'predicted_P(t)': predictie['predicted_consumption'],
-        'real_R(t)': predictie.get('actual_consumption', np.nan)
+        'real_R(t)': predictie.get('actual_consumption', np.nan),
+        'mse': predictie['mse'],
+        'mae': predictie['mae'],
+        'smape': predictie['smape'],
+        'r2': predictie['r2'],
+        'airTemperature': predictie['airTemperature'],
+        'dewTemperature': predictie['dewTemperature'],
     })
 
     # === CALCUL DEVIATIE P(t) si R(t) fata de B(t) ===
@@ -98,4 +104,4 @@ def generate_energy_profile(building_id: str, target_date: str):
 
 # Main
 if __name__ == '__main__':
-    generate_energy_profile('Panther_parking_Alaina', '2017-12-14')
+    generate_energy_profile('Panther_office_Catherine', '2017-12-15')

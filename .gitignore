@@ -12,5 +12,5 @@ test_optimizare.py
 electricity_30_kWh.csv
 electricity_cleaned_kWh.csv
 lista_cladiri.txt
-/optimization_model_V1
-/optimization_model_V2
+/MCP_opt_V1
+/MPC_opt_V2

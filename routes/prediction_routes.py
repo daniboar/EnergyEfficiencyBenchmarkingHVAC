@@ -160,7 +160,7 @@ def get_baseline(building_name, target_date):
             'description': 'Returneaza profilul pentru cladirea si data specificata'
         },
         404: {
-            'description': 'Baseline-ul nu exista in baza de date'
+            'description': 'Nu exista date'
         }
     }
 })

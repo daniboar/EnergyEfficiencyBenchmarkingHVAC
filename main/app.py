@@ -1,6 +1,7 @@
 from flask import Flask
 from flasgger import Swagger
 from config import DB_URI, swagger_template
+from routes.baseline_routes import baseline_bp
 from routes.building_routes import building_bp
 from routes.prediction_routes import prediction_bp
 from flask_sqlalchemy import SQLAlchemy
@@ -17,6 +18,7 @@ db = SQLAlchemy(app)
 # inregistrez toate blueprint-urile
 app.register_blueprint(prediction_bp)
 app.register_blueprint(building_bp)
+app.register_blueprint(baseline_bp)
 
 if __name__ == '__main__':
     app.run(debug=True)

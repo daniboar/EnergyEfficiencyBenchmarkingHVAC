@@ -112,6 +112,9 @@ def predict_energy_for_day(building_id: str, target_date: str):
     timestamps = pd.date_range(start=target_date, periods=24, freq='h')
     day_name = target_date.strftime('%A')
 
+    # Extrag valorile de temperatura pentru cele 24 de ore
+    weather_24h = weather_df.set_index('timestamp').loc[target_date:target_date + pd.Timedelta(hours=23)].copy()
+
     # Rezultate
     df_result = pd.DataFrame({
         'timestamp': timestamps,
@@ -119,6 +122,14 @@ def predict_energy_for_day(building_id: str, target_date: str):
         'predicted_consumption': y_pred,
         'actual_consumption': [np.nan] * 24
     })
+
+    if not weather_24h.empty and len(weather_24h) == 24:
+        df_result['airTemperature'] = weather_24h['airTemperature'].values
+        df_result['dewTemperature'] = weather_24h['dewTemperature'].values
+    else:
+        df_result['airTemperature'] = np.nan
+        df_result['dewTemperature'] = np.nan
+        print("[!] Nu am gasit temperaturi suficiente pentru cele 24 de ore.")
 
     # Incarc si compar cu valorile reale, daca exista
     try:
@@ -148,6 +159,26 @@ def predict_energy_for_day(building_id: str, target_date: str):
     except Exception as e:
         print(f"[!] Nu am putut incarca consumul real: {e}")
 
+    # === Calculez metrice doar daca am valori reale
+    if df_result['actual_consumption'].notna().all():
+        from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+        y_true = df_result['actual_consumption'].values
+        y_pred = df_result['predicted_consumption'].values
+
+        mse = mean_squared_error(y_true, y_pred)
+        mae = mean_absolute_error(y_true, y_pred)
+        r2 = r2_score(y_true, y_pred)
+        smape = np.mean(2 * np.abs(y_pred - y_true) / (np.abs(y_pred) + np.abs(y_true))) * 100
+
+        df_result['mse'] = mse
+        df_result['mae'] = mae
+        df_result['r2'] = r2
+        df_result['smape'] = smape
+    else:
+        print("[!] Nu am suficiente valori reale pentru a calcula metricile.")
+
+
     # === GRAFIC DOAR PREDICTIE ===
     plt.figure(figsize=(12, 5))
     plt.plot(df_result['hour'], df_result['predicted_consumption'], marker='o', color='green', label='Consum Prezis')
@@ -169,4 +200,4 @@ def predict_energy_for_day(building_id: str, target_date: str):
 
 # MAIN FUNCTION
 if __name__ == '__main__':
-    predict_energy_for_day('Panther_education_Tina', '2017-12-14')
+    predict_energy_for_day('Panther_office_Ruthie', '2017-03-15')

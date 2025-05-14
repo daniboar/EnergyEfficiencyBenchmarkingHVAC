@@ -56,7 +56,7 @@ def compare_optimizations(building_id: str, target_date: str):
     plot_output_dir = os.path.join(base_dir, f"{building_id}_{target_date}_{date_day.day_name()}")
     os.makedirs(plot_output_dir, exist_ok=True)
 
-    plot_path = os.path.join(plot_output_dir, f"comparatie_GA_PSO_ACO_{building_id}_{target_date}_{date_day.day_name()}.png")
+    plot_path = os.path.join(plot_output_dir, f"comparatie_{building_id}_{target_date}_{date_day.day_name()}.png")
     plt.savefig(plot_path)
     plt.close()
     print(f"Grafic comparativ salvat in: {plot_path}")
@@ -72,7 +72,7 @@ def compare_optimizations(building_id: str, target_date: str):
         "P(t)_adjusted_ACO": df_aco["P(t)_adjusted_ACO"],
     })
 
-    csv_path = os.path.join(plot_output_dir, f"comparatie_tabel_{building_id}_{target_date}_{date_day.day_name()}.csv")
+    csv_path = os.path.join(plot_output_dir, f"comparatie_{building_id}_{target_date}_{date_day.day_name()}.csv")
     df_final.to_csv(csv_path, index=False)
     print(f"CSV comparativ salvat in: {csv_path}")
 
