@@ -9,10 +9,13 @@ from models.aco_model import AcoOptimization
 from models.baseline_model import Baseline
 from models.dew_temperature_model import DewTemperature
 from models.ga_model import GaOptimization
+from models.precip_depth_1hr_model import PrecipDepth1HR
 from models.pso_model import PsoOptimization
 from models.real_consumption_model import RealConsumption
 from models.prediction_model import Prediction, Base
 from models.air_temperature_model import AirTemperature
+from models.wind_direction_model import WindDirection
+from models.wind_speed_model import WindSpeed
 
 engine = create_engine(DB_URI)
 Session = sessionmaker(bind=engine)
@@ -42,6 +45,9 @@ def predict_for_day(building_name, target_date):
     r2 = df['r2'].tolist()
     airTemperature = df['airTemperature'].tolist()
     dewTemperature = df['dewTemperature'].tolist()
+    windSpeed = df['windSpeed'].tolist()
+    windDirection = df['windDirection'].tolist()
+    precipDepth1HR = df['precipDepth1HR'].tolist()
 
     with Session() as session:
         # Prediction insert/update
@@ -84,6 +90,42 @@ def predict_for_day(building_name, target_date):
                 **{f"h{i}": dewTemperature[i] for i in range(24)}
             )
             session.add(dew_temp)
+
+        # WindSpeed insert/update
+        existing_wind_speed = session.get(WindSpeed, target_date)
+        if existing_wind_speed:
+            for i in range(24):
+                setattr(existing_wind_speed, f'h{i}', windSpeed[i])
+        else:
+            wind_speed = WindSpeed(
+                target_date=target_date,
+                **{f"h{i}": windSpeed[i] for i in range(24)}
+            )
+            session.add(wind_speed)
+
+        # WindDirection insert/update
+        existing_wind_direction = session.get(WindDirection, target_date)
+        if existing_wind_direction:
+            for i in range(24):
+                setattr(existing_wind_direction, f'h{i}', windDirection[i])
+        else:
+            wind_direction = WindDirection(
+                target_date=target_date,
+                **{f"h{i}": windDirection[i] for i in range(24)}
+            )
+            session.add(wind_direction)
+
+        # PrecipDepth1HR insert/update
+        existing_precip = session.get(PrecipDepth1HR, target_date)
+        if existing_precip:
+            for i in range(24):
+                setattr(existing_precip, f'h{i}', precipDepth1HR[i])
+        else:
+            precip_depth = PrecipDepth1HR(
+                target_date=target_date,
+                **{f"h{i}": precipDepth1HR[i] for i in range(24)}
+            )
+            session.add(precip_depth)
 
         # RealConsumption insert/update
         existing_real = session.get(RealConsumption, (building_name, target_date))
@@ -205,6 +247,9 @@ def get_combined_profile(building_name, target_date):
         baseline = session.get(Baseline, (building_name, target_date))
         airTemperature = session.get(AirTemperature, target_date)
         dewTemperature = session.get(DewTemperature, target_date)
+        windSpeed = session.get(WindSpeed, target_date)
+        windDirection = session.get(WindDirection, target_date)
+        precipDepth1HR = session.get(PrecipDepth1HR, target_date)
         ga = session.get(GaOptimization, (building_name, target_date))
         pso = session.get(PsoOptimization, (building_name, target_date))
         aco = session.get(AcoOptimization, (building_name, target_date))
@@ -226,6 +271,9 @@ def get_combined_profile(building_name, target_date):
                 },
                 "airTemperature": getattr(airTemperature, f"h{i}") if airTemperature else None,
                 "dewTemperature": getattr(dewTemperature, f"h{i}") if dewTemperature else None,
+                "windSpeed": getattr(windSpeed, f"h{i}") if windSpeed else None,
+                "windDirection": getattr(windDirection, f"h{i}") if windDirection else None,
+                "precipDepth1HR": getattr(precipDepth1HR, f"h{i}") if precipDepth1HR else None,
             })
 
         return {

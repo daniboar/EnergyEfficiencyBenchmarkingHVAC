@@ -54,6 +54,27 @@ def generate_energy_profile(building_id: str, target_date: str):
         'dewTemperature': predictie['dewTemperature'],
     })
 
+    # === INCARC DATELE METEO ===
+    weather_path = os.path.join(base_dir, '../weather_Panther.csv')
+    if os.path.exists(weather_path):
+        weather_df = pd.read_csv(weather_path, parse_dates=['timestamp'])
+
+        # Extrag ziua respectiva
+        mask = weather_df['timestamp'].dt.date == date_obj.date()
+        weather_day = weather_df.loc[mask]
+
+        # Creez o coloana "hour" pentru join
+        weather_day['hour'] = weather_day['timestamp'].dt.hour
+
+        # Selectez doar coloanele dorite
+        weather_cols = weather_day[['hour', 'windSpeed', 'windDirection', 'precipDepth1HR']]
+
+        # Fac merge cu profilul (pe ora)
+        profil = pd.merge(profil, weather_cols, on='hour', how='left')
+    else:
+        print(f"Fisierul de vreme lipseste: {weather_path}")
+
+
     # === CALCUL DEVIATIE P(t) si R(t) fata de B(t) ===
     profil['P(t)_deviation_%'] = 100 * (profil['predicted_P(t)'] - profil['baseline_B(t)']) / profil['baseline_B(t)']
     profil['R(t)_deviation_%'] = 100 * (profil['real_R(t)'] - profil['baseline_B(t)']) / profil['baseline_B(t)']
