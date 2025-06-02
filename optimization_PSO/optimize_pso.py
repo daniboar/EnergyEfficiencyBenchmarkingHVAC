@@ -34,7 +34,8 @@ def fitness_pso(position, prediction, baseline, peek_hours, offpeek_hours):
 
 # === IMPLEMENTARE PSO ===
 def run_pso(prediction, baseline, peek_hours, offpeek_hours, n_particles=30, iterations=100):
-    positions = np.random.rand(n_particles, 24)
+    levels = np.array([0.25, 0.5, 0.75, 1.0])
+    positions = np.random.choice(levels, size=(n_particles, 24))
     velocities = np.random.randn(n_particles, 24) * 0.1
     personal_best_positions = positions.copy()
     personal_best_scores = np.array(
@@ -50,7 +51,9 @@ def run_pso(prediction, baseline, peek_hours, offpeek_hours, n_particles=30, ite
                              c1 * r1 * (personal_best_positions[i] - positions[i]) +
                              c2 * r2 * (global_best_position - positions[i]))
             positions[i] += velocities[i]
-            positions[i] = np.clip(positions[i], 0.0, 1.0)
+
+            # rotunjesc la cel mai apropiat nivel
+            positions[i] = np.array([levels[np.argmin(abs(levels - p))] for p in positions[i]])
 
             score = fitness_pso(positions[i], prediction, baseline, peek_hours, offpeek_hours)
             if score < personal_best_scores[i]:
@@ -120,6 +123,6 @@ def optimize_consum_pso(building_id: str, target_date: str):
 # === ENTRY POINT ===
 if __name__ == "__main__":
     optimize_consum_pso(
-        building_id="Panther_office_Catherine",
-        target_date="2017-12-14"
+        building_id="Panther_education_Misty",
+        target_date="2017-12-30"
     )

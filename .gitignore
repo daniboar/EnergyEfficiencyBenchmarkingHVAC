@@ -14,3 +14,4 @@ electricity_cleaned_kWh.csv
 lista_cladiri.txt
 /MCP_opt_V1
 /MPC_opt_V2
+__pycache__/

@@ -35,26 +35,36 @@ def fitness_aco(schedule, prediction, baseline, peek_hours, offpeek_hours):
 # === ACO OPTIMIZATION ===
 def run_aco(prediction, baseline, peek_hours, offpeek_hours, n_ants=40, n_iterations=100, alpha=1, beta=2,
             evaporation=0.2):
-    pheromone = np.ones((24, 2))  # 0 = off, 1 = on
+    levels = [0.25, 0.5, 0.75, 1.0]
+    pheromone = np.ones((24, len(levels)))
+
     best_schedule = None
     best_score = float('inf')
 
     for _ in range(n_iterations):
         schedules = []
         scores = []
+        schedule_indices = []
 
         for _ in range(n_ants):
             schedule = []
+            indices = []
+
             for t in range(24):
-                tau = pheromone[t]
-                eta = [1.0, 1.0]
-                prob_0 = (tau[0] ** alpha) * (eta[0] ** beta)
-                prob_1 = (tau[1] ** alpha) * (eta[1] ** beta)
-                total = prob_0 + prob_1
-                prob = [prob_0 / total, prob_1 / total]
-                choice = np.random.choice([0, 1], p=prob)
-                schedule.append(choice)
+                probs = []
+                for l in range(len(levels)):
+                    tau = pheromone[t][l]
+                    eta = 1.0
+                    probs.append((tau ** alpha) * (eta ** beta))
+                probs = np.array(probs)
+                probs /= probs.sum()
+
+                chosen_idx = np.random.choice(len(levels), p=probs)
+                schedule.append(levels[chosen_idx])
+                indices.append(chosen_idx)
+
             schedules.append(schedule)
+            schedule_indices.append(indices)
             score = fitness_aco(schedule, prediction, baseline, peek_hours, offpeek_hours)
             scores.append(score)
 
@@ -62,11 +72,11 @@ def run_aco(prediction, baseline, peek_hours, offpeek_hours, n_ants=40, n_iterat
                 best_score = score
                 best_schedule = schedule
 
-        # actualizare feromoni
         pheromone *= (1 - evaporation)
-        for schedule, score in zip(schedules, scores):
+        for indices, score in zip(schedule_indices, scores):
             for t in range(24):
-                pheromone[t][schedule[t]] += 1.0 / (score + 1e-6)
+                pheromone[t][indices[t]] += 1.0 / (score + 1e-6)
+
 
     return best_schedule
 
@@ -126,6 +136,6 @@ def optimize_consum_aco(building_id: str, target_date: str):
 # === ENTRY POINT ===
 if __name__ == "__main__":
     optimize_consum_aco(
-        building_id="Panther_office_Catherine",
-        target_date="2017-12-14"
+        building_id="Panther_education_Misty",
+        target_date="2017-12-30"
     )

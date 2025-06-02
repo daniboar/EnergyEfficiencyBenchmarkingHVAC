@@ -4,7 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 
-# === DETECTARE ORE DE VÂRF ===
+# === NIVELE POSIBILE HVAC ===
+levels = [0.25, 0.5, 0.75, 1.0]
+
+# === DETECTARE ORE DE VARF ===
 def detect_peek_hours(baseline):
     mean_val = np.mean(baseline)
     std_val = np.std(baseline)
@@ -36,9 +39,9 @@ def fitness(individual, prediction, baseline, peek_hours, offpeek_hours):
 
     return -total_penalty
 
-# === COMponente GA ===
+# === COMPONENTE GA ===
 def initialize_population(pop_size):
-    return [[random.randint(0, 1) for _ in range(24)] for _ in range(pop_size)]
+    return [[random.choice(levels) for _ in range(24)] for _ in range(pop_size)]
 
 def selection(population, fitnesses):
     return random.choices(population, weights=fitnesses, k=2)
@@ -48,7 +51,10 @@ def crossover(p1, p2):
     return p1[:cut] + p2[cut:], p2[:cut] + p1[cut:]
 
 def mutate(individual, rate=0.1):
-    return [1 - gene if random.random() < rate else gene for gene in individual]
+    return [
+        random.choice(levels) if random.random() < rate else gene
+        for gene in individual
+    ]
 
 def run_ga(prediction, baseline, peek_hours, offpeek_hours, generations=100, pop_size=50):
     population = initialize_population(pop_size)
@@ -82,7 +88,7 @@ def optimize_consum_ga(building_id: str, target_date: str):
     peek_hours, offpeek_hours = detect_peek_hours(baseline)
 
     print("Peak hours: ", peek_hours)
-    print("Offpeek hours: ", offpeek_hours)
+    print("Offpeak hours: ", offpeek_hours)
 
     optimal_schedule = run_ga(prediction, baseline, peek_hours, offpeek_hours)
     df["HVAC_GA"] = optimal_schedule
@@ -120,6 +126,6 @@ def optimize_consum_ga(building_id: str, target_date: str):
 # === MAIN ===
 if __name__ == "__main__":
     optimize_consum_ga(
-        building_id="Panther_office_Catherine",
-        target_date="2017-12-14"
+        building_id="Panther_education_Misty",
+        target_date="2017-12-30"
     )
