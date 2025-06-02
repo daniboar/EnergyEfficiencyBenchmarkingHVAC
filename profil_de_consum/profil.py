@@ -64,13 +64,16 @@ def generate_energy_profile(building_id: str, target_date: str):
         weather_day = weather_df.loc[mask]
 
         # Creez o coloana "hour" pentru join
+        weather_day = weather_day.copy()  # te asiguri că e o copie sigură
         weather_day['hour'] = weather_day['timestamp'].dt.hour
+
 
         # Selectez doar coloanele dorite
         weather_cols = weather_day[['hour', 'windSpeed', 'windDirection', 'precipDepth1HR']]
 
         # Fac merge cu profilul (pe ora)
         profil = pd.merge(profil, weather_cols, on='hour', how='left')
+        profil[['windSpeed', 'windDirection', 'precipDepth1HR']] = profil[['windSpeed', 'windDirection', 'precipDepth1HR']].fillna(0)
     else:
         print(f"Fisierul de vreme lipseste: {weather_path}")
 
