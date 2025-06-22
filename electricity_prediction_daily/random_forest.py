@@ -64,7 +64,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
         X.append(building_data.iloc[i].values)
         y.append(building_data[building_id].iloc[i + 1: i + 1 + PREDICTION_HORIZON].values)
 
-        # Salvăm TOATE cele 24 de timestamp-uri asociate predicției
+        # Salvezm toate cele 24 de timestamp-uri asociate predicției
         timestamps.append(building_data.index[i + 1: i + 1 + PREDICTION_HORIZON].tolist())
 
     # Adaug timestamp-urile intr-o singura lista (flatten)
@@ -84,7 +84,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     # Fac predicții pe setul de test
     y_test_pred = model.predict(X_test)
 
-    # Calculez metricile de performanaă (MSE, MAE, R², SMAPE)
+    # Calculez metricile de performanta (MSE, MAE, R², SMAPE)
     mse = mean_squared_error(y_test, y_test_pred, multioutput='uniform_average')
     mae = mean_absolute_error(y_test, y_test_pred, multioutput='uniform_average')
     r2 = r2_score(y_test, y_test_pred, multioutput='uniform_average')

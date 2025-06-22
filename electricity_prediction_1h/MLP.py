@@ -15,6 +15,7 @@ data = data.iloc[:, :31]
 output_folder = 'mlp_predictions'
 os.makedirs(output_folder, exist_ok=True)
 
+metrics_log = []
 
 # 2. Functie pentru generarea caracteristicilor temporale (sliding window)
 def create_time_series_features(df, target_column, window_size=3):
@@ -152,6 +153,8 @@ for building_id in building_columns:
 
     print(f"Cladire: {building_id}, MSE: {mse:.2f}, MAE: {mae:.2f}, R^2: {r2:.2f}, SMAPE: {smape:.2f}%")
 
+    metrics_log.append([building_id, mse, mae, r2, smape])
+
     # Salvăm rezultatele
     result = pd.DataFrame({'timestamp': building_data.index[-len(y_test_actual):],
                            'actual': y_test_actual,
@@ -173,5 +176,8 @@ for building_id in building_columns:
     plt.legend()
     plt.savefig(os.path.join(building_folder, f'MLP_graph_{building_id}.png'))
     plt.close()
+
+metrics_df = pd.DataFrame(metrics_log, columns=['Building', 'MSE', 'MAE', 'R2', 'SMAPE'])
+metrics_df.to_csv('mlp_metrics.csv', index=False)
 
 print("\nToate predictiile pentru cele 30 de cladiri au fost finalizate!")
