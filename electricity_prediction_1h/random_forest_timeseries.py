@@ -14,7 +14,7 @@ os.makedirs(output_folder, exist_ok=True)
 
 metrics_log = []
 
-# 2. Funcție pentru generarea caracteristicilor temporale (sliding window)
+# 2. Funcie pentru generarea caracteristicilor temporale (sliding window)
 def create_time_series_features(df, target_column, window_size=3):
     df = df.copy()
     for lag in range(1, window_size + 1):
@@ -54,7 +54,7 @@ for building_id in building_columns:
     # Aplic generarea caracteristicilor temporale
     building_data = create_time_series_features(building_data, building_id, window_size=3)
 
-    # Separam caracteristicile (X) și ținta (y)
+    # Separam caracteristicile (X) si tinta (y)
     X = building_data.drop(columns=[building_id])
     y = building_data[building_id]
 
@@ -82,7 +82,7 @@ for building_id in building_columns:
     # Salvez metricile in log
     metrics_log.append([building_id, test_mse, test_mae, test_r2, test_smape])
 
-    # Realizez predicții pentru intreaga serie
+    # Realizez predictii pentru intreaga serie
     all_predictions = model.predict(X)
 
     # Salvez rezultatele intr-un DataFrame
@@ -103,7 +103,7 @@ for building_id in building_columns:
     plt.plot(result['timestamp'][:250], result['predicted'][:250], label='Valori Prezise', color='red')
     plt.xlabel('Timestamp')
     plt.ylabel('Consum de energie')
-    plt.title(f'Predicție Time Series Random Forest pentru {building_id}')
+    plt.title(f'Predictie Time Series Random Forest pentru {building_id}')
     plt.legend()
     plt.xticks(rotation=45)
     plt.tight_layout()

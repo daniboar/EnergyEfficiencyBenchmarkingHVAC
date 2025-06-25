@@ -17,7 +17,7 @@ output_folder = 'mlp_daily_predictions'
 os.makedirs(output_folder, exist_ok=True)
 
 # Parametrii modelului
-LOOKBACK_DAYS = 3  # Folosesc ultimele 3 zile (3 * 24 ore) pentru predicție
+LOOKBACK_DAYS = 3  # Folosesc ultimele 3 zile (3 * 24 ore) pentru predictie
 PREDICTION_HORIZON = 24  # Vreau sa prezic pentru urmatoareal 24 de ore
 
 metrics_log = []
@@ -91,13 +91,13 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     # Convertesc timestamp-ul in datetime si aplic caracteristici
     building_data = create_daily_features(building_data, building_id, LOOKBACK_DAYS)
 
-    # Construiesc X (input) și y (output)
+    # Construiesc X (input) si y (output)
     X, y, timestamps = [], [], []
     for i in range(len(building_data) - PREDICTION_HORIZON):
         X.append(building_data.iloc[i].values)
         y.append(building_data[building_id].iloc[i + 1: i + 1 + PREDICTION_HORIZON].values)
 
-        # Salvez toate cele 24 de timestamp-uri asociate predicției
+        # Salvez toate cele 24 de timestamp-uri asociate predictiei
         timestamps.append(building_data.index[i + 1: i + 1 + PREDICTION_HORIZON].tolist())
 
     # Adaug timestamp-urile intr-o singura lista (flatten)
@@ -113,7 +113,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     X = scaler_x.fit_transform(X)
     y = scaler_y.fit_transform(y)
 
-    # Impart setul în train, test si validare (80%-10%-10%)
+    # Impart setul in train, test si validare (80%-10%-10%)
     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
     X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, shuffle=False)
 

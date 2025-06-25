@@ -176,7 +176,7 @@ def predict_energy_for_day(building_id: str, target_date: str):
         df_result['r2'] = r2
         df_result['smape'] = smape
     else:
-        print("[!] Nu am suficiente valori reale pentru a calcula metricile.")
+        print("Nu am suficiente valori reale pentru a calcula metricile.")
 
 
     # === GRAFIC DOAR PREDICTIE ===
@@ -195,7 +195,7 @@ def predict_energy_for_day(building_id: str, target_date: str):
     csv_path = os.path.join(output_folder, f'prediction_{building_id}_{target_date.date()}_{day_name}.csv')
     df_result.to_csv(csv_path, index=False)
 
-    print(f"Predictia pentru {building_id} ({target_date.date()}) a fost salvata în {output_folder}")
+    print(f"Predictia pentru {building_id} ({target_date.date()}) a fost salvata in {output_folder}")
 
 
 # MAIN FUNCTION

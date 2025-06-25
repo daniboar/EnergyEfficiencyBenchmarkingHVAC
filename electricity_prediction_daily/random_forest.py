@@ -9,12 +9,12 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 # 1. Incarc datele din csv
 data = pd.read_csv('electricity_cleaned_kWh.csv')
-data = data.iloc[:, :31]  # Timestamp + primele 30 de clădiri
+data = data.iloc[:, :31]  # Timestamp + primele 30 de cladiri
 output_folder = 'random_forest_daily_predictions'
 os.makedirs(output_folder, exist_ok=True)
 
 # Parametrii modelului
-LOOKBACK_DAYS = 3  # Folosesc ultimele 3 zile (3 * 24 ore) pentru predicție
+LOOKBACK_DAYS = 3  # Folosesc ultimele 3 zile (3 * 24 ore) pentru predictie
 PREDICTION_HORIZON = 24  # Vreau sa prezic pentru urmatoarele 24 de ore
 
 metrics_log = []
@@ -64,7 +64,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
         X.append(building_data.iloc[i].values)
         y.append(building_data[building_id].iloc[i + 1: i + 1 + PREDICTION_HORIZON].values)
 
-        # Salvezm toate cele 24 de timestamp-uri asociate predicției
+        # Salvezm toate cele 24 de timestamp-uri asociate predictiei
         timestamps.append(building_data.index[i + 1: i + 1 + PREDICTION_HORIZON].tolist())
 
     # Adaug timestamp-urile intr-o singura lista (flatten)
@@ -73,7 +73,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     X = np.array(X)
     y = np.array(y)
 
-    # Impart datele în train (80%), validare (10%), test (10%)
+    # Impart datele in train (80%), validare (10%), test (10%)
     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
     X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, shuffle=False)
 
@@ -92,7 +92,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
 
     print(f"Rezultate pentru {building_id}: MSE={mse:.2f}, MAE={mae:.2f}, R²={r2:.2f}, SMAPE={smape:.2f}%")
 
-    # Salvez metricile în log
+    # Salvez metricile in log
     metrics_log.append([building_id, mse, mae, r2, smape])
 
     # Ajustez dimensiunile pentru a fi egale
@@ -111,7 +111,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
 
     result = result.drop_duplicates(subset=['timestamp']).sort_values(by='timestamp')
 
-    # Salvez în CSV
+    # Salvez in CSV
     building_folder = os.path.join(output_folder, f'building_{building_id}')
     os.makedirs(building_folder, exist_ok=True)
     result.to_csv(os.path.join(building_folder, f'RandomForest_24h_{building_id}.csv'), index=False)

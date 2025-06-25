@@ -64,7 +64,7 @@ def generate_energy_profile(building_id: str, target_date: str):
         weather_day = weather_df.loc[mask]
 
         # Creez o coloana "hour" pentru join
-        weather_day = weather_day.copy()  # te asiguri că e o copie sigură
+        weather_day = weather_day.copy()  # te asiguri ca e o copie sigura
         weather_day['hour'] = weather_day['timestamp'].dt.hour
 
 
@@ -114,7 +114,7 @@ def generate_energy_profile(building_id: str, target_date: str):
 
     plt.title(f'Abatere procentuala fata de baseline - {building_id} - {target_date}', fontsize=16)
     plt.xlabel('Ora', fontsize=14)
-    plt.ylabel('Deviație (%)', fontsize=14)
+    plt.ylabel('Deviatie (%)', fontsize=14)
     plt.xticks(np.arange(0, 24, 1), fontsize=12)
     plt.yticks(np.arange(0, 100, 10), fontsize=12)
     plt.grid(axis='both', linestyle='--', linewidth=0.5)

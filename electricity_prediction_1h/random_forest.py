@@ -37,7 +37,7 @@ for building_id in building_columns:
     building_data = pd.get_dummies(building_data, columns=['weekday'])
     # print(building_data)
 
-    # Definesc X (caracteristici din coloana timestamp) și y (consumul de energie pentru cladirea selectata)
+    # Definesc X (caracteristici din coloana timestamp) si y (consumul de energie pentru cladirea selectata)
     X = building_data.drop(columns=[building_id])
     y = building_data[building_id]
 
@@ -86,7 +86,7 @@ for building_id in building_columns:
     plt.plot(result['timestamp'][:250], result['predicted'][:250], label='Valori Prezise', color='red')
     plt.xlabel('Timestamp')
     plt.ylabel('Consum de energie')
-    plt.title(f'Predicție Random Forest pentru {building_id}')
+    plt.title(f'Predictie Random Forest pentru {building_id}')
     plt.legend()
     plt.xticks(rotation=45)
     plt.tight_layout()

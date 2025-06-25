@@ -89,7 +89,7 @@ for building_id in building_columns:
     # Caracteristici temporale de baza
     building_data = create_time_series_features(building_data, building_id, window_size=3)
 
-    # Separ X și y
+    # Separ X si y
     X = building_data.drop(columns=[building_id])
     y = building_data[building_id]
 
@@ -155,7 +155,7 @@ for building_id in building_columns:
 
     metrics_log.append([building_id, mse, mae, r2, smape])
 
-    # Salvăm rezultatele
+    # Salvez rezultatele
     result = pd.DataFrame({'timestamp': building_data.index[-len(y_test_actual):],
                            'actual': y_test_actual,
                            'predicted': y_test_pred,

@@ -101,7 +101,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     X = scaler_X.fit_transform(feature_data)
     y = scaler_y.fit_transform(target_data.values.reshape(-1, 1))
 
-    # Construiesc X si y secvențial pentru predicție pe 24 ore
+    # Construiesc X si y secvential pentru predictie pe 24 ore
     X_seq, y_seq, timestamps = [], [], []
     for i in range(len(X) - PREDICTION_HORIZON):
         X_seq.append(X[i])

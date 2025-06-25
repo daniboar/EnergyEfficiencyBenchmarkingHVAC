@@ -37,7 +37,7 @@ def objective(z, B, gamma):
 
 # === CONSTRANGERI ===
 def peak_constraints(z):
-    # z(t) == 1 pentru orele de vârf
+    # z(t) == 1 pentru orele de varf
     return [z[t] - 1.0 for t in PEAK_HOURS] + [1.0 - z[t] for t in PEAK_HOURS]
 
 # === SETARI PENTRU OPTIMIZARE ===
@@ -83,4 +83,4 @@ plt.tight_layout()
 plt.savefig(plot_path)
 plt.close()
 
-print(f"Optimizare completă. Fișier CSV salvat la: {csv_path}")
+print(f"Optimizare completa. Fisier CSV salvat la: {csv_path}")

@@ -34,7 +34,7 @@ def calculate_baseline_per_day(file_name):
             day_folder = os.path.join(building_folder, day_name)
             os.makedirs(day_folder, exist_ok=True)
 
-            # Selectez toate datele pentru ziua respectivă
+            # Selectez toate datele pentru ziua respectiva
             day_data = building_data[building_data['weekday'] == day_idx]
 
             # Aleg ultimele ROLLING_DAYS zile disponibile
@@ -55,7 +55,7 @@ def calculate_baseline_per_day(file_name):
             # Media pe fiecare ora
             y_mean = past_data.mean(axis=0)
 
-            # Salvez baseline în CSV
+            # Salvez baseline in CSV
             baseline_df = pd.DataFrame({
                 'hour': range(24),
                 'B(t)': y_mean
