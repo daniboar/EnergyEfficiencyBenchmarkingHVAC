@@ -129,7 +129,7 @@ def predict_energy_for_day(building_id: str, target_date: str):
     else:
         df_result['airTemperature'] = np.nan
         df_result['dewTemperature'] = np.nan
-        print("[!] Nu am gasit temperaturi suficiente pentru cele 24 de ore.")
+        print("Nu am gasit temperaturi suficiente pentru cele 24 de ore.")
 
     # Incarc si compar cu valorile reale, daca exista
     try:
@@ -157,7 +157,7 @@ def predict_energy_for_day(building_id: str, target_date: str):
                 os.path.join(output_folder, f'consumption_vs_prediction__{building_id}_{target_date.date()}.png'))
             plt.close()
     except Exception as e:
-        print(f"[!] Nu am putut incarca consumul real: {e}")
+        print(f"Nu am putut incarca consumul real: {e}")
 
     # === Calculez metrice doar daca am valori reale
     if df_result['actual_consumption'].notna().all():

@@ -136,7 +136,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
     # Antrenez modelul
-    epochs = 500
+    epochs = 200
     train_losses, val_losses = [], []
     for epoch in range(epochs):
         model.train()

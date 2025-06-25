@@ -49,7 +49,7 @@ def create_time_series_features(df, target_column, lookback_days):
     return df
 
 
-# 3. Iterez prin cele 30 de cladiri și antrenez modelele
+# 3. Iterez prin cele 30 de cladiri si antrenez modelele
 for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     print(f"\nProcesare pentru cladirea: {building_id}")
 
@@ -58,7 +58,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     # Creez setul de date cu caracteristici temporale
     building_data = create_time_series_features(building_data, building_id, LOOKBACK_DAYS)
 
-    # Construiesc X (input) și y (output)
+    # Construiesc X (input) si y (output)
     X, y, timestamps = [], [], []
     for i in range(len(building_data) - PREDICTION_HORIZON):
         X.append(building_data.iloc[i].values)
@@ -73,7 +73,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     X = np.array(X)
     y = np.array(y)
 
-    # Împart datele în train (80%), validare (10%), test (10%)
+    # Impart datele în train (80%), validare (10%), test (10%)
     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
     X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, shuffle=False)
 
@@ -81,7 +81,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     model = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42)
     model.fit(X_train, y_train)
 
-    # Fac predicții pe setul de test
+    # Fac predictii pe setul de test
     y_test_pred = model.predict(X_test)
 
     # Calculez metricile de performanta (MSE, MAE, R², SMAPE)

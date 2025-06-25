@@ -27,7 +27,7 @@ def compare_optimizations(building_id: str, target_date: str):
     path_ga = f"../optimization_GA/{building_id}_{target_date}/profil_OPTIMIZAT_GA_{building_id}_{target_date}.csv"
     path_aco = f"../optimization_ACO/{building_id}_{target_date}/profil_OPTIMIZAT_ACO_{building_id}_{target_date}.csv"
 
-    # Incarca fisierele CSV
+    # Incarc fisierele CSV
     df_ga = pd.read_csv(path_ga)
     df_pso = pd.read_csv(path_pso)
     df_aco = pd.read_csv(path_aco)

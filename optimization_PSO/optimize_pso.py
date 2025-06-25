@@ -79,7 +79,7 @@ def optimize_consum_pso(building_id: str, target_date: str):
     prediction = df["predicted_P(t)"].values
     baseline = df["baseline_B(t)"].values
 
-    # detectam peek/offpeak automat
+    # detectez peek/offpeak automat
     peek_hours, offpeek_hours = detect_peek_hours(baseline)
 
     print("Peak hours: ", peek_hours)

@@ -54,7 +54,7 @@ for building_id in building_columns:
     # Aplic generarea caracteristicilor temporale
     building_data = create_time_series_features(building_data, building_id, window_size=3)
 
-    # Separăm caracteristicile (X) și ținta (y)
+    # Separam caracteristicile (X) și ținta (y)
     X = building_data.drop(columns=[building_id])
     y = building_data[building_id]
 
@@ -79,13 +79,13 @@ for building_id in building_columns:
 
     print(f"Cladire: {building_id}, MSE: {test_mse:.2f}, MAE: {test_mae:.2f}, R^2: {test_r2:.2f}, SMAPE: {test_smape:.2f}%")
 
-    #Salvez metricile in log
+    # Salvez metricile in log
     metrics_log.append([building_id, test_mse, test_mae, test_r2, test_smape])
 
     # Realizez predicții pentru intreaga serie
     all_predictions = model.predict(X)
 
-    # Salvez rezultatele într-un DataFrame
+    # Salvez rezultatele intr-un DataFrame
     result = pd.DataFrame({'timestamp': building_data.index,
                            'actual': y,
                            'predicted': all_predictions,
@@ -112,7 +112,7 @@ for building_id in building_columns:
     plt.savefig(graph_output_path)
     plt.close()
 
-#Salvez metricile intr-un fisier CSV
+# Salvez metricile intr-un fisier CSV
 metrics_df = pd.DataFrame(metrics_log, columns=['Building', 'MSE', 'MAE', 'R2', 'SMAPE'])
 metrics_df.to_csv('random_forest_timeSeries_metrics.csv', index=False)
 

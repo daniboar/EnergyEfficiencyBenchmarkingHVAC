@@ -33,13 +33,12 @@ def calculate_baseline_for_date(building_id, target_date_str):
             past_data.append(daily)
 
     if len(past_data) == 0:
-        print(f"[!] Nu sunt suficiente date pentru {building_id} - {day_name} anterior datei {target_date_str}")
+        print(f"Nu sunt suficiente date pentru {building_id} - {day_name} anterior datei {target_date_str}")
         return
 
     past_data = np.array(past_data)
     y_mean = past_data.mean(axis=0)
 
-    # Creez path: baselines_day/<building_id>/<target_date>/
     day_folder = os.path.join(output_folder, building_id, target_date_str)
     os.makedirs(day_folder, exist_ok=True)
 
@@ -47,7 +46,7 @@ def calculate_baseline_for_date(building_id, target_date_str):
     csv_path = os.path.join(day_folder, f'baseline_{building_id}_{target_date_str}.csv')
     baseline_df.to_csv(csv_path, index=False)
 
-    print(f"[✔] Baseline salvat in {csv_path}")
+    print(f"Baseline salvat in {csv_path}")
 
 # === MAIN ===
 if __name__ == '__main__':
