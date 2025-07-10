@@ -9,14 +9,8 @@ from optimization_PSO.optimize_pso import optimize_consum_pso
 from profil_de_consum.profil import generate_energy_profile
 
 
+# Generez un plot comparativ de optimizare folosind 3 tipuri de optimizatori pentru o cladire si o zi data
 def compare_optimizations(building_id: str, target_date: str):
-    """
-    Genereaza un plot comparativ de optimizare folosind 3 tipuri de optimizatori pentru o cladire si o zi data.
-
-    Args:
-        building_id (str): Numele cladirii
-        target_date (str): Data in format 'YYYY-MM-DD'
-    """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     generate_energy_profile(building_id, target_date)
     optimize_consum_aco(building_id, target_date)
@@ -75,6 +69,7 @@ def compare_optimizations(building_id: str, target_date: str):
     csv_path = os.path.join(plot_output_dir, f"comparatie_{building_id}_{target_date}_{date_day.day_name()}.csv")
     df_final.to_csv(csv_path, index=False)
     print(f"CSV comparativ salvat in: {csv_path}")
+
 
 if __name__ == "__main__":
     compare_optimizations(

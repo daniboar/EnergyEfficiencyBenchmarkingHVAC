@@ -16,6 +16,7 @@ os.makedirs(output_folder, exist_ok=True)
 
 metrics_log = []
 
+
 # 2. Definesc modelul LSTM
 class LSTMModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
@@ -41,6 +42,7 @@ class TimeSeriesDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
+
 
 # Functie pentru generarea caracteristicilor temporale (sliding window)
 def create_time_series_features(df, target_column, window_size=3):

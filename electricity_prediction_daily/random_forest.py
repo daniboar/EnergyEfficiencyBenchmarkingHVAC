@@ -19,6 +19,7 @@ PREDICTION_HORIZON = 24  # Vreau sa prezic pentru urmatoarele 24 de ore
 
 metrics_log = []
 
+
 # 2. Functie pentru generarea caracteristicilor temporale
 def create_time_series_features(df, target_column, lookback_days):
     df['timestamp'] = pd.to_datetime(df['timestamp'])

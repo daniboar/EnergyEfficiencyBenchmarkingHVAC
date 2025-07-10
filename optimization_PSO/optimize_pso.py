@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# === DETECTARE peek/offpeek din baseline ===
+# DETECTARE peek/offpeek din baseline
 def detect_peek_hours(baseline):
     mean_val = np.mean(baseline)
     std_val = np.std(baseline)
@@ -14,7 +14,7 @@ def detect_peek_hours(baseline):
     return peek_hours, offpeek_hours
 
 
-# === FUNCTIA DE FITNESS CU ponderi dinamice ===
+# FUNCTIA DE FITNESS CU ponderi dinamice
 def fitness_pso(position, prediction, baseline, peek_hours, offpeek_hours):
     penalty = 0
     for t in range(24):
@@ -32,7 +32,7 @@ def fitness_pso(position, prediction, baseline, peek_hours, offpeek_hours):
     return penalty
 
 
-# === IMPLEMENTARE PSO ===
+# IMPLEMENTARE PSO
 def run_pso(prediction, baseline, peek_hours, offpeek_hours, n_particles=30, iterations=100):
     levels = np.array([0.25, 0.5, 0.75, 1.0])
     positions = np.random.choice(levels, size=(n_particles, 24))
@@ -66,7 +66,7 @@ def run_pso(prediction, baseline, peek_hours, offpeek_hours, n_particles=30, ite
     return global_best_position
 
 
-# === FUNCTIE PRINCIPALA ===
+# FUNCTIE PRINCIPALA
 def optimize_consum_pso(building_id: str, target_date: str):
     day_name = pd.to_datetime(target_date).day_name()
     profile_dir = f"../profil_de_consum/profil_consum_{target_date}_{building_id}"
@@ -120,7 +120,7 @@ def optimize_consum_pso(building_id: str, target_date: str):
     print(f"Grafic salvat in: {plot_path}")
 
 
-# === ENTRY POINT ===
+# MAIN
 if __name__ == "__main__":
     optimize_consum_pso(
         building_id="Panther_education_Misty",

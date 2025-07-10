@@ -9,6 +9,7 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 output_dir = os.path.join(base_dir, 'baselines_dataset_building')
 os.makedirs(output_dir, exist_ok=True)
 
+
 def generate_full_baseline_for_building(building_id):
     df = pd.read_csv(INPUT_FILE)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -90,6 +91,7 @@ def generate_full_baseline_for_building(building_id):
     plt.savefig(plot_path)
     plt.close()
     print(f"Plot salvat in: {plot_path}")
+
 
 # === MAIN ===
 if __name__ == '__main__':

@@ -17,6 +17,7 @@ os.makedirs(output_folder, exist_ok=True)
 
 metrics_log = []
 
+
 # 2. Functie pentru caracteristici zilnice
 def create_daily_features(df, target_column):
     df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -156,7 +157,7 @@ for building_id in building_columns:
 
     print(f"Cladire: {building_id}, MSE: {mse:.2f}, MAE: {mae:.2f}, R²: {r2:.2f}, SMAPE: {smape:.2f}%")
 
-    #Salvez metricile in log
+    # Salvez metricile in log
     metrics_log.append([building_id, mse, mae, r2, smape])
 
     # Salvez rezultatele
@@ -182,7 +183,7 @@ for building_id in building_columns:
     plt.savefig(os.path.join(building_folder, f'MLP_daily_graph_{building_id}.png'))
     plt.close()
 
-#Salvez metricile intr-un fisier CSV
+# Salvez metricile intr-un fisier CSV
 metrics_df = pd.DataFrame(metrics_log, columns=['Building', 'MSE', 'MAE', 'R2', 'SMAPE'])
 metrics_df.to_csv('mlp_metrics.csv', index=False)
 

@@ -17,6 +17,7 @@ os.makedirs(output_folder, exist_ok=True)
 
 metrics_log = []
 
+
 # 2. Functie pentru generarea caracteristicilor temporale (sliding window)
 def create_time_series_features(df, target_column, window_size=3):
     df = df.copy()

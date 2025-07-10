@@ -3,13 +3,13 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# === CONFIG ===
+# CONFIG
 energy_path = '../electricity_30_kWh.csv'
 weather_path = '../weather_Panther.csv'
 output_folder = 'building_heatmaps'
 os.makedirs(output_folder, exist_ok=True)
 
-# === Citire date ===
+#  Citire date
 energy_df = pd.read_csv(energy_path)
 weather_df = pd.read_csv(weather_path)
 energy_df['timestamp'] = pd.to_datetime(energy_df['timestamp'])
@@ -20,11 +20,11 @@ weather_df = weather_df[['timestamp', 'airTemperature', 'dewTemperature', 'cloud
                          'precipDepth1HR', 'precipDepth6HR', 'seaLvlPressure',
                          'windDirection', 'windSpeed']]
 
-# === Cladiri ===
+# Cladiri
 building_columns = [col for col in energy_df.columns if col != 'timestamp']
 summary_corrs = {}
 
-# === Corelatie si heatmap per cladire ===
+# Corelatie si heatmap per cladir
 for building_id in building_columns:
     temp_df = energy_df[['timestamp', building_id]].dropna()
     merged_df = pd.merge(temp_df, weather_df, on='timestamp')
@@ -47,7 +47,7 @@ for building_id in building_columns:
     plt.savefig(os.path.join(output_folder, f'heatmap_{building_id}.png'))
     plt.close()
 
-# === Heatmap general: medii absolute ===
+# Heatmap general: medii absolute
 summary_df = pd.DataFrame(summary_corrs).T.abs()
 mean_corrs = summary_df.mean().sort_values(ascending=False)
 

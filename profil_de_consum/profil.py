@@ -6,30 +6,23 @@ import numpy as np
 from prediction_for_a_day.prediction_for_a_day_LSTM import predict_energy_for_day
 
 
+# Generez profilul de consum pentru o cladire si o zi data.
 def generate_energy_profile(building_id: str, target_date: str):
-    """
-    Generez profilul de consum pentru o cladire si o zi data.
-
-    Args:
-        building_id (str): Numele cladirii
-        target_date (str): Data in format 'YYYY-MM-DD'
-    """
-
-    # === PARSEZ DATA SI ZIUA SAPTAMANII ===
+    # PARSEZ DATA SI ZIUA SAPTAMANII
     date_obj = pd.to_datetime(target_date)
     day_name = date_obj.day_name()  # ex: Monday, Tuesday, Wednesday...
 
-    # === APELEZ FUNCTIA DE PREDICTIE ===
+    # APELEZ FUNCTIA DE PREDICTIE
     predict_energy_for_day(building_id, target_date)
 
-    # === CONFIGUREZ CAILE ===
+    # CONFIGUREZ CAILE
     baseline_path = f'../baseline/baselines_days_output/{building_id}/{day_name}/{building_id}_{day_name}_baseline.csv'
     prediction_path = f'../prediction_for_a_day/prediction_for_{target_date}_{day_name}/{building_id}/prediction_{building_id}_{target_date}_{day_name}.csv'
     base_dir = os.path.dirname(os.path.realpath(__file__))
     output_dir = os.path.join(base_dir, f'profil_consum_{target_date}_{building_id}')
     os.makedirs(output_dir, exist_ok=True)
 
-    # === INCARC DATE ===
+    # INCARC DATE
     if not os.path.exists(baseline_path):
         print(f"Fisierul baseline lipseste: {baseline_path}")
         return
@@ -40,7 +33,7 @@ def generate_energy_profile(building_id: str, target_date: str):
     baseline = pd.read_csv(baseline_path)
     predictie = pd.read_csv(prediction_path)
 
-    # === COMBINARE ===
+    # COMBINARE DATE
     profil = pd.DataFrame({
         'hour': baseline['hour'],
         'baseline_B(t)': baseline['B(t)'],
@@ -54,7 +47,7 @@ def generate_energy_profile(building_id: str, target_date: str):
         'dewTemperature': predictie['dewTemperature'],
     })
 
-    # === INCARC DATELE METEO ===
+    # INCARC DATELE METEO
     weather_path = os.path.join(base_dir, '../weather_Panther.csv')
     if os.path.exists(weather_path):
         weather_df = pd.read_csv(weather_path, parse_dates=['timestamp'])
@@ -67,27 +60,25 @@ def generate_energy_profile(building_id: str, target_date: str):
         weather_day = weather_day.copy()  # te asiguri ca e o copie sigura
         weather_day['hour'] = weather_day['timestamp'].dt.hour
 
-
         # Selectez doar coloanele dorite
         weather_cols = weather_day[['hour', 'windSpeed', 'windDirection', 'precipDepth1HR']]
 
         # Fac merge cu profilul (pe ora)
         profil = pd.merge(profil, weather_cols, on='hour', how='left')
-        profil[['windSpeed', 'windDirection', 'precipDepth1HR']] = profil[['windSpeed', 'windDirection', 'precipDepth1HR']].fillna(0)
+        profil[['windSpeed', 'windDirection', 'precipDepth1HR']] = profil[
+            ['windSpeed', 'windDirection', 'precipDepth1HR']].fillna(0)
     else:
         print(f"Fisierul de vreme lipseste: {weather_path}")
 
-
-    # === CALCUL DEVIATIE P(t) si R(t) fata de B(t) ===
     profil['P(t)_deviation_%'] = 100 * (profil['predicted_P(t)'] - profil['baseline_B(t)']) / profil['baseline_B(t)']
     profil['R(t)_deviation_%'] = 100 * (profil['real_R(t)'] - profil['baseline_B(t)']) / profil['baseline_B(t)']
 
-    # === SALVARE CSV ===
+    # SALVARE CSV
     profil_csv_path = os.path.join(output_dir, f'profil_consum_{building_id}_{target_date}.csv')
     profil.to_csv(profil_csv_path, index=False)
     print(f"Profilul a fost salvat in {profil_csv_path}")
 
-    # === GRAFIC 1: Profil Real vs Predictie vs Baseline ===
+    # GRAFIC 1: Profil Real vs Predictie vs Baseline
     plt.figure(figsize=(14, 6))
     plt.plot(profil['hour'], profil['baseline_B(t)'], label='Baseline B(t)', color='blue', marker='o')
     plt.plot(profil['hour'], profil['predicted_P(t)'], label='Predictie P(t)', color='green', marker='o')
@@ -105,7 +96,7 @@ def generate_energy_profile(building_id: str, target_date: str):
     plt.savefig(os.path.join(output_dir, f'graf_consum_{building_id}_{target_date}.png'))
     plt.close()
 
-    # === GRAFIC 2: Abatere fata de Baseline ===
+    # GRAFIC 2: Abatere fata de Baseline
     plt.figure(figsize=(14, 6))
     plt.plot(profil['hour'], profil['P(t)_deviation_%'], label='P(t) vs B(t)', color='green', marker='o')
     if profil['real_R(t)'].notna().all():
@@ -126,6 +117,6 @@ def generate_energy_profile(building_id: str, target_date: str):
     print(f"Graficele au fost salvate in folderul {output_dir}")
 
 
-# Main
+# MAIN
 if __name__ == '__main__':
     generate_energy_profile('Panther_office_Catherine', '2017-12-15')

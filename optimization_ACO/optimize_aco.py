@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# === DETECTARE peek/offpeek ===
+# DETECTARE peek/offpeek
 def detect_peek_hours(baseline):
     mean_val = np.mean(baseline)
     std_val = np.std(baseline)
@@ -14,7 +14,7 @@ def detect_peek_hours(baseline):
     return peek_hours, offpeek_hours
 
 
-# === FITNESS FUNCTION ===
+# FITNESS FUNCTION
 def fitness_aco(schedule, prediction, baseline, peek_hours, offpeek_hours):
     penalty = 0
     for t in range(24):
@@ -32,7 +32,8 @@ def fitness_aco(schedule, prediction, baseline, peek_hours, offpeek_hours):
             penalty += 0.5  # penalizare switching
     return penalty
 
-# === ACO OPTIMIZATION ===
+
+# ACO OPTIMIZATION
 def run_aco(prediction, baseline, peek_hours, offpeek_hours, n_ants=40, n_iterations=100, alpha=1, beta=2,
             evaporation=0.2):
     levels = [0.25, 0.5, 0.75, 1.0]
@@ -77,11 +78,10 @@ def run_aco(prediction, baseline, peek_hours, offpeek_hours, n_ants=40, n_iterat
             for t in range(24):
                 pheromone[t][indices[t]] += 1.0 / (score + 1e-6)
 
-
     return best_schedule
 
 
-# === FUNCTIA PRINCIPALA ===
+# FUNCTIA PRINCIPALA
 def optimize_consum_aco(building_id: str, target_date: str):
     day_name = pd.to_datetime(target_date).day_name()
     profile_dir = f"../profil_de_consum/profil_consum_{target_date}_{building_id}"
@@ -133,7 +133,7 @@ def optimize_consum_aco(building_id: str, target_date: str):
     print(f"Grafic salvat in: {plot_path}")
 
 
-# === ENTRY POINT ===
+# MAIN
 if __name__ == "__main__":
     optimize_consum_aco(
         building_id="Panther_education_Misty",

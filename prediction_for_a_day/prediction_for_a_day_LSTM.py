@@ -6,7 +6,7 @@ import torch.nn as nn
 import joblib
 import matplotlib.pyplot as plt
 
-# === CONFIG ===
+# CONFIG
 DATA_PATH = '../electricity_cleaned_kWh.csv'
 WEATHER_PATH = '../weather_Panther.csv'
 MODELS_DIR = '../electricity_prediction_daily/modele salvate LSTM'
@@ -14,7 +14,7 @@ LOOKBACK_DAYS = 3
 PREDICTION_HORIZON = 24
 
 
-# === MODEL DEFINITIE ===
+# MODEL DEFINITIE
 class LSTMModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers, dropout=0.2):
         super().__init__()
@@ -27,7 +27,7 @@ class LSTMModel(nn.Module):
         return self.fc(out[:, -1, :])
 
 
-# === FEATURE ENGINEERING ===
+# FEATURE ENGINEERING
 def create_features(df, target_column):
     df['hour'] = df.index.hour
     df['day'] = df.index.day
@@ -47,7 +47,7 @@ def create_features(df, target_column):
     return df
 
 
-# === FUNCTIA PRINCIPALA ===
+# FUNCTIA PRINCIPALA
 def predict_energy_for_day(building_id: str, target_date: str):
     base_dir = os.path.dirname(os.path.realpath(__file__))
     target_date = pd.Timestamp(target_date)
@@ -159,7 +159,7 @@ def predict_energy_for_day(building_id: str, target_date: str):
     except Exception as e:
         print(f"Nu am putut incarca consumul real: {e}")
 
-    # === Calculez metrice doar daca am valori reale
+    # Calculez metrice doar daca am valori reale
     if df_result['actual_consumption'].notna().all():
         from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
@@ -178,8 +178,7 @@ def predict_energy_for_day(building_id: str, target_date: str):
     else:
         print("Nu am suficiente valori reale pentru a calcula metricile.")
 
-
-    # === GRAFIC DOAR PREDICTIE ===
+    # GRAFIC DOAR PREDICTIE
     plt.figure(figsize=(12, 5))
     plt.plot(df_result['hour'], df_result['predicted_consumption'], marker='o', color='green', label='Consum Prezis')
     plt.title(f'Consum prezis pentru {building_id} - {target_date.date()} ({day_name})')
@@ -191,13 +190,13 @@ def predict_energy_for_day(building_id: str, target_date: str):
     plt.savefig(os.path.join(output_folder, f'prediction_{building_id}_{target_date.date()}.png'))
     plt.close()
 
-    # === Salvare CSV ===
+    # Salvare CSV
     csv_path = os.path.join(output_folder, f'prediction_{building_id}_{target_date.date()}_{day_name}.csv')
     df_result.to_csv(csv_path, index=False)
 
     print(f"Predictia pentru {building_id} ({target_date.date()}) a fost salvata in {output_folder}")
 
 
-# MAIN FUNCTION
+# MAIN
 if __name__ == '__main__':
     predict_energy_for_day('Panther_office_Ruthie', '2017-03-15')

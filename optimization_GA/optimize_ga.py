@@ -4,10 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 
-# === NIVELE POSIBILE HVAC ===
+# NIVELE POSIBILE HVAC
 levels = [0.25, 0.5, 0.75, 1.0]
 
-# === DETECTARE ORE DE VARF ===
+
+# DETECTARE ORE DE VARF
 def detect_peek_hours(baseline):
     mean_val = np.mean(baseline)
     std_val = np.std(baseline)
@@ -16,7 +17,8 @@ def detect_peek_hours(baseline):
     offpeek_hours = [t for t in range(24) if t not in peek_hours]
     return peek_hours, offpeek_hours
 
-# === FITNESS FUNCTION CU peek/offpeak ===
+
+# FITNESS FUNCTION CU peek/offpeak
 def fitness(individual, prediction, baseline, peek_hours, offpeek_hours):
     total_penalty = 0
     for hour in range(24):
@@ -39,22 +41,27 @@ def fitness(individual, prediction, baseline, peek_hours, offpeek_hours):
 
     return -total_penalty
 
-# === COMPONENTE GA ===
+
+#  COMPONENTE GA
 def initialize_population(pop_size):
     return [[random.choice(levels) for _ in range(24)] for _ in range(pop_size)]
+
 
 def selection(population, fitnesses):
     return random.choices(population, weights=fitnesses, k=2)
 
+
 def crossover(p1, p2):
     cut = random.randint(1, 22)
     return p1[:cut] + p2[cut:], p2[:cut] + p1[cut:]
+
 
 def mutate(individual, rate=0.1):
     return [
         random.choice(levels) if random.random() < rate else gene
         for gene in individual
     ]
+
 
 def run_ga(prediction, baseline, peek_hours, offpeek_hours, generations=100, pop_size=50):
     population = initialize_population(pop_size)
@@ -73,7 +80,8 @@ def run_ga(prediction, baseline, peek_hours, offpeek_hours, generations=100, pop
     best = max(population, key=lambda ind: fitness(ind, prediction, baseline, peek_hours, offpeek_hours))
     return best
 
-# === OPTIMIZARE PRINCIPALA ===
+
+# OPTIMIZARE PRINCIPALA
 def optimize_consum_ga(building_id: str, target_date: str):
     day_name = pd.to_datetime(target_date).day_name()
     profile_dir = f"../profil_de_consum/profil_consum_{target_date}_{building_id}"
@@ -94,7 +102,7 @@ def optimize_consum_ga(building_id: str, target_date: str):
     df["HVAC_GA"] = optimal_schedule
     df["P(t)_adjusted_GA"] = prediction * df["HVAC_GA"]
 
-    # === SALVARE ===
+    # SALVARE
     base_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(base_dir, f"{building_id}_{target_date}")
     os.makedirs(output_dir, exist_ok=True)
@@ -104,7 +112,7 @@ def optimize_consum_ga(building_id: str, target_date: str):
 
     df.to_csv(output_csv, index=False)
 
-    # === PLOT ===
+    # PLOT
     plt.figure(figsize=(14, 6))
     plt.plot(df['hour'], df['baseline_B(t)'], label='Baseline B(t)', color='blue', marker='o')
     plt.plot(df['hour'], df['predicted_P(t)'], label='Predictie P(t)', color='green', marker='o')
@@ -123,7 +131,8 @@ def optimize_consum_ga(building_id: str, target_date: str):
     print(f"CSV salvat in: {output_csv}")
     print(f"Grafic salvat in: {plot_path}")
 
-# === MAIN ===
+
+# MAIN
 if __name__ == "__main__":
     optimize_consum_ga(
         building_id="Panther_education_Misty",

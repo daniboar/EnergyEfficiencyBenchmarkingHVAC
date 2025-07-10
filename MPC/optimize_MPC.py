@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 from scipy.optimize import minimize
 
-# === CONFIGURARE ===
+# CONFIGURARE
 BUILDING_ID = 'Panther_office_Larry'
 DATE = '2017-12-14_Thursday'
 
@@ -13,14 +13,14 @@ PREDICTION_PATH = f'../prediction_for_a_day/prediction_for_2017-12-14_Thursday/{
 OUTPUT_FOLDER = 'mpc_optimization_output'
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-# === PARAMETRI OPTIMIZARE ===
-GAMMA = 0.5     # penalizare pentru peak
-Z_MIN = 0.5     # minim admis pentru z(t)
+# PARAMETRI OPTIMIZARE
+GAMMA = 0.5  # penalizare pentru peak
+Z_MIN = 0.5  # minim admis pentru z(t)
 Z_MAX = 0.9
-H = 24          # orizont de optimizare: 24h
+H = 24  # orizont de optimizare: 24h
 PEAK_HOURS = list(range(9, 18))
 
-# === INCARCARE DATE ===
+# INCARCARE DATE
 baseline_df = pd.read_csv(BASELINE_PATH)
 pred_df = pd.read_csv(PREDICTION_PATH)
 
@@ -29,26 +29,29 @@ baseline_today = baseline_df.groupby("hour")["B(t)"].mean().reindex(range(24)).f
 prediction = pred_df['predicted_consumption'].values[:24]
 B_avg = (baseline_today + prediction) / 2
 
-# === FUNCTIE OBIECTIV ===
+
+# FUNCTIE OBIECTIV
 def objective(z, B, gamma):
     total_consumption = np.sum(B * z)
     peak_demand = np.max(B * z)
     return total_consumption + gamma * peak_demand
 
-# === CONSTRANGERI ===
+
+# CONSTRANGERI
 def peak_constraints(z):
     # z(t) == 1 pentru orele de varf
     return [z[t] - 1.0 for t in PEAK_HOURS] + [1.0 - z[t] for t in PEAK_HOURS]
 
-# === SETARI PENTRU OPTIMIZARE ===
+
+#  SETARI PENTRU OPTIMIZARE
 bounds = [(Z_MIN, Z_MAX) if t not in PEAK_HOURS else (1.0, 1.0) for t in range(H)]
 z0 = np.ones(H)
 constraints = {'type': 'ineq', 'fun': lambda z: np.array(peak_constraints(z))}
 
-# === OPTIMIZARE ===
+# OPTIMIZARE
 res = minimize(objective, z0, args=(B_avg, GAMMA), method='trust-constr', bounds=bounds, constraints=constraints)
 
-# === EXTRAGERE SI SALVARE ===
+# EXTRAGERE SI SALVARE
 z_opt = res.x
 optimized_consumption = B_avg * z_opt
 
@@ -67,7 +70,7 @@ csv_path = os.path.join(OUTPUT_FOLDER, f'mpc_optimized_{BUILDING_ID}.csv')
 plot_path = os.path.join(OUTPUT_FOLDER, f'mpc_optimized_{BUILDING_ID}.png')
 result_df.to_csv(csv_path, index=False)
 
-# === GRAFIC ===
+# GRAFIC
 plt.figure(figsize=(12, 6))
 plt.plot(result_df['hour'], result_df['baseline'], '--', label='Baseline')
 plt.plot(result_df['hour'], result_df['prediction'], '--', label='Prediction')

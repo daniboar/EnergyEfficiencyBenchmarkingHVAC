@@ -14,6 +14,7 @@ os.makedirs(output_folder, exist_ok=True)
 
 metrics_log = []
 
+
 # 2. Funcie pentru generarea caracteristicilor temporale (sliding window)
 def create_time_series_features(df, target_column, window_size=3):
     df = df.copy()
@@ -37,6 +38,7 @@ def create_time_series_features(df, target_column, window_size=3):
 
     df.dropna(inplace=True)
     return df
+
 
 # 3. Iterez prin cele 30 de cladiri pentru a face predictia si salvarea in CSV
 building_columns = data.columns[1:31]
@@ -77,7 +79,8 @@ for building_id in building_columns:
     test_r2 = r2_score(y_test, y_test_pred)
     test_smape = np.mean(2 * np.abs(y_test_pred - y_test) / (np.abs(y_test_pred) + np.abs(y_test))) * 100
 
-    print(f"Cladire: {building_id}, MSE: {test_mse:.2f}, MAE: {test_mae:.2f}, R^2: {test_r2:.2f}, SMAPE: {test_smape:.2f}%")
+    print(
+        f"Cladire: {building_id}, MSE: {test_mse:.2f}, MAE: {test_mae:.2f}, R^2: {test_r2:.2f}, SMAPE: {test_smape:.2f}%")
 
     # Salvez metricile in log
     metrics_log.append([building_id, test_mse, test_mae, test_r2, test_smape])

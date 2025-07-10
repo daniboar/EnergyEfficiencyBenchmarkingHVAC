@@ -30,7 +30,7 @@ def calculate_baseline_per_day(file_name):
         building_data['hour'] = building_data.index.hour
 
         for day_idx, day_name in day_map.items():
-            print(f" → Ziua: {day_name}")
+            print(f"Ziua: {day_name}")
             day_folder = os.path.join(building_folder, day_name)
             os.makedirs(day_folder, exist_ok=True)
 

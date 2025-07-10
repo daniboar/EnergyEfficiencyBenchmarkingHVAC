@@ -7,6 +7,7 @@ csv_file = '../electricity_30_kWh.csv'
 output_folder = 'baselines_day'
 os.makedirs(output_folder, exist_ok=True)
 
+
 def calculate_baseline_for_date(building_id, target_date_str):
     df = pd.read_csv(csv_file)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -48,7 +49,7 @@ def calculate_baseline_for_date(building_id, target_date_str):
 
     print(f"Baseline salvat in {csv_path}")
 
+
 # === MAIN ===
 if __name__ == '__main__':
-    # exemplu de test
     calculate_baseline_for_date("Panther_office_Catherine", "2017-12-14")

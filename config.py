@@ -23,6 +23,5 @@ swagger_template = {
             "description": "Operatii legate de baseline-urile din dataset"
         },
 
-
     ]
 }

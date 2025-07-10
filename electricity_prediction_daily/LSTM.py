@@ -26,7 +26,7 @@ os.makedirs(output_folder, exist_ok=True)
 metrics_log = []
 
 
-# Model LSTM
+# 2. Model LSTM
 class LSTMModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers, dropout=0.2):
         super().__init__()

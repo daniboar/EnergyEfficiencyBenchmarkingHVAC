@@ -22,6 +22,7 @@ PREDICTION_HORIZON = 24  # Vreau sa prezic pentru urmatoareal 24 de ore
 
 metrics_log = []
 
+
 # 2. Functie pentru caracteristici zilnice
 def create_daily_features(df, target_column, lookback_days):
     df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -37,7 +38,8 @@ def create_daily_features(df, target_column, lookback_days):
     df['is_weekend'] = df['weekday'].apply(lambda x: 1 if x >= 5 else 0)
 
     # Anotimpuri
-    df['season'] = df['month'].apply(lambda x: 1 if x in [12, 1, 2] else 2 if x in [3, 4, 5] else 3 if x in [6, 7, 8] else 4)
+    df['season'] = df['month'].apply(
+        lambda x: 1 if x in [12, 1, 2] else 2 if x in [3, 4, 5] else 3 if x in [6, 7, 8] else 4)
 
     # One-hot encoding pentru ziua saptamanii si sezon
     df = pd.get_dummies(df, columns=['weekday', 'season'])
@@ -79,6 +81,7 @@ class TimeSeriesDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
+
 
 cnt = 0
 # 5. Iterez prin cele 30 de cladiri si antrenez modelul
@@ -154,7 +157,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
         train_loss /= len(train_loader)
         train_losses.append(train_loss)
 
-        #Evaluarea pe setul de validare
+        # Evaluarea pe setul de validare
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
@@ -190,7 +193,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
 
     print(f"Cladire: {building_id}, MSE: {mse:.2f}, MAE: {mae:.2f}, R²: {r2:.2f}, SMAPE: {smape:.2f}%")
 
-    #Salvez metricile in log
+    # Salvez metricile in log
     metrics_log.append([building_id, mse, mae, r2, smape])
 
     # Ajustez dimensiunile pentru a fi egale
@@ -225,7 +228,7 @@ for building_id in tqdm(data.columns[1:31], desc="Procesare cladiri"):
     plt.savefig(os.path.join(building_folder, f'MLP_daily_graph_{building_id}.png'))
     plt.close()
 
-#Salvez metricile intr-un fisier CSV
+# Salvez metricile intr-un fisier CSV
 metrics_df = pd.DataFrame(metrics_log, columns=['Building', 'MSE', 'MAE', 'R2', 'SMAPE'])
 metrics_df.to_csv('mlp_metrics.csv', index=False)
 

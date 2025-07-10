@@ -27,5 +27,5 @@ baseline_bp = Blueprint('baseline', __name__)
     }
 })
 @baseline_bp.route('/baseline-dataset/<string:building_name>', methods=['GET'])
-def serve_baseline_csv(building_name):
+def get_baseline_dataset(building_name):
     return baseline_dataset(building_name)

@@ -37,7 +37,6 @@ class TimeSeriesDataset(Dataset):
         self.X = torch.tensor(X.values.astype(np.float32))
         self.y = torch.tensor(y.values.astype(np.float32)).view(-1, 1)
 
-
     def __len__(self):
         return len(self.X)
 
@@ -45,7 +44,7 @@ class TimeSeriesDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 
-#Functie pentru caracteristici zilnice
+# Functie pentru caracteristici zilnice
 def create_daily_features(df, target_column):
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df.set_index('timestamp', inplace=True)
@@ -75,6 +74,7 @@ def create_daily_features(df, target_column):
 
     df_daily.dropna(inplace=True)
     return df_daily
+
 
 # 3. Iterez prin cele 30 de cladiri
 building_columns = data.columns[1:31]
@@ -162,7 +162,7 @@ for building_id in building_columns:
 
     print(f" Cladire: {building_id}, MSE: {mse:.2f}, MAE: {mae:.2f}, R²: {r2:.2f}, SMAPE: {smape:.2f}%")
 
-    #Salvez metricile in log
+    # Salvez metricile in log
     metrics_log.append([building_id, mse, mae, r2, smape])
 
     # Salvez rezultatele într-un CSV
@@ -190,7 +190,7 @@ for building_id in building_columns:
     plt.savefig(os.path.join(building_folder, f'LSTM_daily_graph_{building_id}.png'))
     plt.close()
 
-#Salvez metricile intr-un fisier CSV
+# Salvez metricile intr-un fisier CSV
 metrics_df = pd.DataFrame(metrics_log, columns=['Building', 'MSE', 'MAE', 'R2', 'SMAPE'])
 metrics_df.to_csv('lstm_metrics.csv', index=False)
 

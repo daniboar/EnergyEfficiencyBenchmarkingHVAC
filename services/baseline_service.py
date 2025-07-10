@@ -8,9 +8,9 @@ from baseline.baseline_all_dataset_good import generate_full_baseline_for_buildi
 
 def baseline_dataset(building_id):
     generate_full_baseline_for_building(building_id)
-    print(building_id)
+
     csv_path = f"../baseline/baselines_dataset_building/{building_id}/{building_id}_baseline_vs_real.csv"
-    print(csv_path)
+
     if not os.path.exists(csv_path):
         return {"error": "Fisierul nu exista"}, 404
 
